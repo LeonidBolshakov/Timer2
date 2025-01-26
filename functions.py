@@ -4,6 +4,8 @@ from PyQt6.QtWidgets import (
 )  # Импорт виджета QLineEdit и QApplication
 from num2words import num2words  # Библиотека для преобразования чисел в текст
 
+from const import Const as c
+
 
 def num(line_edit: QLineEdit) -> int:
     """
@@ -38,8 +40,12 @@ def hour_minutes_sec(seconds: int) -> (int, int, int):
     Returns:
         tuple: Кортеж в формате (часы, минуты, секунды).
     """
-    hour, min_sec = divmod(seconds, 3600)  # Вычисляем часы и остаток в секундах
-    minutes, sec = divmod(min_sec, 60)  # Вычисляем из остатка минуты и секунды
+    hour, min_sec = divmod(
+        seconds, c.SECONDS_IN_HOUR
+    )  # Вычисляем часы и остаток в секундах
+    minutes, sec = divmod(
+        min_sec, c.SECONDS_IN_MINUTE
+    )  # Вычисляем из остатка минуты и секунды
 
     return hour, minutes, sec
 
@@ -58,9 +64,9 @@ def time_to_text(seconds: int) -> str:
     hour, minutes, sec = hour_minutes_sec(seconds)
 
     # Генерация текстового представления для каждого компонента времени
-    hour_text = num_to_text(hour, "m", ["часов", "час", "часа"])
-    minutes_text = num_to_text(minutes, "f", ["минут", "минута", "минуты"])
-    sec_text = num_to_text(sec, "f", ["секунд", "секунда", "секунды"])
+    hour_text = num_to_text(hour, c.GENDER_M, c.FORMS_HOUR)
+    minutes_text = num_to_text(minutes, c.GENDER_F, c.FORMS_MINUTE)
+    sec_text = num_to_text(sec, c.GENDER_F, c.FORMS_SECUNDA)
 
     # Объединяем текстовое представление времени и приводим первую букву к заглавной
     return (hour_text + minutes_text + sec_text).capitalize()
@@ -81,7 +87,7 @@ def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
     # Преобразуем число в текст и добавляем правильную форму слова
     return (
         num2words(
-            number, lang="ru", gender=gender
+            number, lang=c.LANG_RU, gender=gender
         )  # Число в текстовом виде (например, "один", "два")
         + " "
         + get_word_form(
@@ -110,14 +116,14 @@ def get_word_form(number: int, word_after_number: list[str]) -> str:
     # Определяем правильную форму слова на основе последней и двух последних цифр
     match last_digit:
         case (
-        1
+            1
         ) if not 11 <= last_digits <= 14:  # Если число оканчивается на 1 (кроме 11-14), используем вторую форму
             return word_after_number[1]
         case (
-        2 | 3 | 4
+            2 | 3 | 4
         ) if not 11 <= last_digits <= 14:  # Если число оканчивается на 2, 3 или 4 (кроме 11-14), используем третью форму
             return word_after_number[2]
         case (
-        _
+            _
         ):  # Во всех остальных случаях используем первую форму (множественное число)
             return word_after_number[0]

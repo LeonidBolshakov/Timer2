@@ -3,6 +3,7 @@ from PyQt6.QtCore import QTimer
 import inform
 from functions import on_quit
 from inform import InformTimeLeft
+from const import Const as c
 
 
 class Clock:
@@ -74,11 +75,11 @@ class Clock:
 
     def start(self):
         """
-        Запускает таймер с интервалом в 1 секунду (1000 миллисекунд).
+        Запускает таймер с интервалом в c.TIMER_INTERVAL миллисекунд.
         """
         # Подключаем обработчик события (on_time_out) к сигналу timeout от QTimer
         # noinspection PyUnresolvedReferences
         self.timer.timeout.connect(self.on_time_out)
 
-        # Запускаем таймер. Интервал установлен на 1000 мс (1 секунда)
-        self.timer.start(1000)
+        # Запускаем таймер. Интервал установлен на c.TIMER_INTERVAL миллисекунд
+        self.timer.start(c.TIMER_INTERVAL)

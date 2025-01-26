@@ -8,6 +8,7 @@ from PyQt6 import uic
 from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import QRegularExpression
 
+from const import Const as c
 import inform  # Модуль для работы с уведомлениями (например, звуковые сигналы)
 from clock import Clock  # Модуль для управления таймером
 import functions as f  # Вспомогательные функции
@@ -46,7 +47,7 @@ class Timer2(QMainWindow):
         Устанавливает валидаторы, подключает события и задает начальные параметры.
         """
         super().__init__()
-        uic.loadUi("timer_2.ui", self)  # Загрузка интерфейса из файла .ui
+        uic.loadUi(c.FILE_UI, self)  # Загрузка интерфейса из файла .ui
 
         self.clock = None  # Атрибут для хранения объекта Clock
 
@@ -66,11 +67,11 @@ class Timer2(QMainWindow):
         """
         # Валидация для часов (0-23, пустое поле допустимо)
         self.validator_hour = QRegularExpressionValidator(
-            QRegularExpression(r"[0-9]|1[0-9]|2[0-3]")
+            QRegularExpression(c.RE_PATTERN_0_24)
         )
         # Валидация для минут и секунд (0-59, пустое поле допустимо)
         self.validator_min_sec = QRegularExpressionValidator(
-            QRegularExpression(r"[0-5][0-9]")
+            QRegularExpression(c.RE_PATTERN_0_60)
         )
 
     def assign_validators(self):
@@ -100,10 +101,10 @@ class Timer2(QMainWindow):
         Устанавливает жирный шрифт для всех полей ввода времени.
         """
         for line_edit in (
-                self.lineEdit_HM_H,
-                self.lineEdit_HM_M,
-                self.lineEdit_MS_M,
-                self.lineEdit_MS_S,
+            self.lineEdit_HM_H,
+            self.lineEdit_HM_M,
+            self.lineEdit_MS_M,
+            self.lineEdit_MS_S,
         ):
             font = line_edit.font()
             font.setBold(True)
@@ -205,9 +206,14 @@ class Timer2(QMainWindow):
         """
         match self.active_time_field():
             case TimeField.MS:
-                return f.num(self.lineEdit_MS_M) * 60 + f.num(self.lineEdit_MS_S)
+                return f.num(self.lineEdit_MS_M) * c.SECONDS_IN_MINUTE + f.num(
+                    self.lineEdit_MS_S
+                )
             case TimeField.HM:
-                return f.num(self.lineEdit_HM_H) * 3600 + f.num(self.lineEdit_HM_M) * 60
+                return (
+                    f.num(self.lineEdit_HM_H) * c.SECONDS_IN_HOUR
+                    + f.num(self.lineEdit_HM_M) * c.SECONDS_IN_MINUTE
+                )
             case _:
                 return 0
 
@@ -232,15 +238,8 @@ class Timer2(QMainWindow):
 
         Args:
             txt (str): Введенный текст.
-            focus: Поле ввода, на которое нужно переместить фокус.
+            focus: виджет, на который нужно переместить фокус.
         """
-        # Определение стилей для активного и неактивного состояния полей
-        active_style = (
-            "QLineEdit { background-color: #f5ffb3; }"  # Желтый фон для активных полей
-        )
-        inactive_style = (
-            "QLineEdit { background-color: white; }"  # Белый фон для неактивных полей
-        )
 
         # Определяем активное поле ввода на основе текущего режима
         match self.active_time_field():
@@ -250,24 +249,24 @@ class Timer2(QMainWindow):
                 self.lineEdit_MS_S.clear()
 
                 # Применение активного стиля к полям ЧЧ:ММ
-                self.lineEdit_HM_H.setStyleSheet(active_style)
-                self.lineEdit_HM_M.setStyleSheet(active_style)
+                self.lineEdit_HM_H.setStyleSheet(c.ACTIVE_FIELD_BG_COLOR)
+                self.lineEdit_HM_M.setStyleSheet(c.ACTIVE_FIELD_BG_COLOR)
 
                 # Применение неактивного стиля к полям ММ:СС
-                self.lineEdit_MS_M.setStyleSheet(inactive_style)
-                self.lineEdit_MS_S.setStyleSheet(inactive_style)
+                self.lineEdit_MS_M.setStyleSheet(c.INACTIVE_FIELD_BG_COLOR)
+                self.lineEdit_MS_S.setStyleSheet(c.INACTIVE_FIELD_BG_COLOR)
             case TimeField.MS:  # Режим ММ:СС
                 # Очистка полей для часов и минут (ЧЧ:ММ)
                 self.lineEdit_HM_H.clear()
                 self.lineEdit_HM_M.clear()
 
                 # Применение активного стиля к полям ММ:СС
-                self.lineEdit_MS_M.setStyleSheet(active_style)
-                self.lineEdit_MS_S.setStyleSheet(active_style)
+                self.lineEdit_MS_M.setStyleSheet(c.ACTIVE_FIELD_BG_COLOR)
+                self.lineEdit_MS_S.setStyleSheet(c.ACTIVE_FIELD_BG_COLOR)
 
                 # Применение неактивного стиля к полям ЧЧ:ММ
-                self.lineEdit_HM_H.setStyleSheet(inactive_style)
-                self.lineEdit_HM_M.setStyleSheet(inactive_style)
+                self.lineEdit_HM_H.setStyleSheet(c.INACTIVE_FIELD_BG_COLOR)
+                self.lineEdit_HM_M.setStyleSheet(c.INACTIVE_FIELD_BG_COLOR)
 
         # Если длина введенного текста достигает 2 символов, перемещаем фокус на следующее поле
         if len(txt) == 2:
