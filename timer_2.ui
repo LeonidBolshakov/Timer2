@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>737</width>
+    <width>761</width>
     <height>315</height>
    </rect>
   </property>
@@ -354,6 +354,9 @@
            <bold>false</bold>
           </font>
          </property>
+         <property name="toolTip">
+          <string>Введите часы (0-23) или нажмите Tab</string>
+         </property>
         </widget>
         <widget class="QLabel" name="label_4">
          <property name="sizePolicy">
@@ -541,6 +544,9 @@
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>Введите минуты (0-59)</string>
          </property>
         </widget>
         <widget class="QLabel" name="lblSec">
@@ -736,6 +742,9 @@
              <bold>true</bold>
             </font>
            </property>
+           <property name="toolTip">
+            <string>Введите минуты (0-59) или нажмите Tab</string>
+           </property>
           </widget>
           <widget class="QLabel" name="label_5">
            <property name="sizePolicy">
@@ -911,6 +920,9 @@
              <weight>75</weight>
              <bold>true</bold>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Введите секунды (0-59)</string>
            </property>
           </widget>
          </widget>
@@ -1213,6 +1225,15 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_MS_M</tabstop>
+  <tabstop>lineEdit_MS_S</tabstop>
+  <tabstop>lineEdit_HM_H</tabstop>
+  <tabstop>lineEdit_HM_M</tabstop>
+  <tabstop>btnStart</tabstop>
+  <tabstop>btnQuit</tabstop>
+  <tabstop>btnTunes</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
