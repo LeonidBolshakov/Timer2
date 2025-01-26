@@ -1,8 +1,11 @@
 from PyQt6.QtWidgets import (
     QLineEdit,
     QApplication,
-)  # Импорт виджета QLineEdit и QApplication
-from num2words import num2words  # Библиотека для преобразования чисел в текст
+    QMessageBox,
+)
+from num2words import num2words  # type: ignore # Библиотека для преобразования чисел в текст
+
+from const import Const as c
 
 
 def num(line_edit: QLineEdit) -> int:
@@ -18,17 +21,21 @@ def num(line_edit: QLineEdit) -> int:
     """
     return (
         int(line_edit.text()) if line_edit.text() else 0
-    )  # Если текст есть, преобразуем его в число, иначе возвращаем 0
+    )  # Если текст не пустой, преобразуем его в число, иначе возвращаем 0
 
 
-def on_quit():
+def on_quit() -> None:
     """
     Завершает выполнение программы, вызывая метод `quit()` у текущего экземпляра QApplication.
     """
-    QApplication.instance().quit()  # Завершение текущего приложения
+    app = QApplication.instance()
+    if app is not None:
+        app.quit()
+    else:
+        QMessageBox.warning(None, c.TITLE_INTERNAL_ERROR, c.TEXT_INTERNAL_ERROR)
 
 
-def hour_minutes_sec(seconds: int) -> (int, int, int):
+def hour_minutes_sec(seconds: int) -> tuple[int, int, int]:
     """
     Конвертирует секунды в часы, минуты и секунды.
 
@@ -38,8 +45,12 @@ def hour_minutes_sec(seconds: int) -> (int, int, int):
     Returns:
         tuple: Кортеж в формате (часы, минуты, секунды).
     """
-    hour, min_sec = divmod(seconds, 3600)  # Вычисляем часы и остаток в секундах
-    minutes, sec = divmod(min_sec, 60)  # Вычисляем из остатка минуты и секунды
+    hour, min_sec = divmod(
+        seconds, c.SECONDS_IN_HOUR
+    )  # Вычисляем часы и остаток в секундах
+    minutes, sec = divmod(
+        min_sec, c.SECONDS_IN_MINUTE
+    )  # Вычисляем из остатка минуты и секунды
 
     return hour, minutes, sec
 
@@ -58,9 +69,9 @@ def time_to_text(seconds: int) -> str:
     hour, minutes, sec = hour_minutes_sec(seconds)
 
     # Генерация текстового представления для каждого компонента времени
-    hour_text = num_to_text(hour, "m", ["часов", "час", "часа"])
-    minutes_text = num_to_text(minutes, "f", ["минут", "минута", "минуты"])
-    sec_text = num_to_text(sec, "f", ["секунд", "секунда", "секунды"])
+    hour_text = num_to_text(hour, c.GENDER_M, c.FORMS_HOUR)
+    minutes_text = num_to_text(minutes, c.GENDER_F, c.FORMS_MINUTE)
+    sec_text = num_to_text(sec, c.GENDER_F, c.FORMS_SECUNDA)
 
     # Объединяем текстовое представление времени и приводим первую букву к заглавной
     return (hour_text + minutes_text + sec_text).capitalize()
@@ -71,8 +82,8 @@ def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
     Преобразует число в текст с указанием правильной формы слова, следующего за цифрами
 
     Args:
-        number (int): Число, которое нужно преобразовать.
-        gender (str): Род числа ("m" для мужского, "f" для женского).
+        number (int): Число, которое нужно преобразовать
+        gender (str): Род числа ("m" для мужского, "f" для женского)
         word_forms (list[str]): Список трёх форм слова (множественная, единственная, двойственная).
 
     Returns:
@@ -81,7 +92,7 @@ def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
     # Преобразуем число в текст и добавляем правильную форму слова
     return (
         num2words(
-            number, lang="ru", gender=gender
+            number, lang=c.LANG_RU, gender=gender
         )  # Число в текстовом виде (например, "один", "два")
         + " "
         + get_word_form(
@@ -95,10 +106,10 @@ def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
 
 def get_word_form(number: int, word_after_number: list[str]) -> str:
     """
-    Определяет правильную форму слова в зависимости от числа.
+    Определяет правильную форму слова в зависимости от числительного.
 
     Args:
-        number (int): Число, для которого нужно определить форму слова.
+        number (int): Число, для которого нужно определить форму слова
         word_after_number (list[str]): Список трёх форм слова (множественная, единственная, двойственная).
 
     Returns:
@@ -109,15 +120,33 @@ def get_word_form(number: int, word_after_number: list[str]) -> str:
 
     # Определяем правильную форму слова на основе последней и двух последних цифр
     match last_digit:
-        case (
-        1
-        ) if not 11 <= last_digits <= 14:  # Если число оканчивается на 1 (кроме 11-14), используем вторую форму
+        case 1 if (
+            not 11 <= last_digits <= 14
+        ):  # Если число оканчивается на 1 (кроме 11-14), используем вторую форму
             return word_after_number[1]
-        case (
-        2 | 3 | 4
-        ) if not 11 <= last_digits <= 14:  # Если число оканчивается на 2, 3 или 4 (кроме 11-14), используем третью форму
+        case 2 | 3 | 4 if (
+            not 11 <= last_digits <= 14
+        ):  # Если число оканчивается на 2, 3 или 4 (кроме 11-14), используем третью форму
             return word_after_number[2]
         case (
-        _
+            _
         ):  # Во всех остальных случаях используем первую форму (множественное число)
             return word_after_number[0]
+
+
+def beep() -> None:
+    """
+    Воспроизводит короткий звуковой сигнал (системный звуковой сигнал приложения).
+    """
+    QApplication.beep()  # Используем стандартный метод для воспроизведения системного сигнала
+
+
+def inform_fatal_error(title: str, text: str) -> None:
+    """
+    Действия при фатальной ошибке
+    :param title: заголовок сообщения об ошибке
+    :param text: текст сообщения об ошибке
+    :return:
+    """
+    QMessageBox.warning(None, title, text)
+    on_quit()

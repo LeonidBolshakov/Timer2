@@ -1,84 +1,69 @@
-from PyQt6.QtCore import QTimer
+from typing import Callable
 
-import inform
-from functions import on_quit
+import functions as f
 from inform import InformTimeLeft
+from const import Const as C
+from tunes import Tunes
+from precise_timer import PreciseTimer
 
 
 class Clock:
     """
-    Основной класс таймера.
-    Этот класс управляет отсчётом времени, отправляет уведомления и
-    выполняет действия при завершении времени.
+    Класс работы со временем.
+    Этот класс управляет обратным отсчётом времени, и инициирует отправку уведомлений.
 
     Атрибуты:
-        seconds_left (int): Количество секунд, оставшихся до завершения таймера.
-        draw_time (callable): Функция для обновления отображения оставшегося времени.
-        timer (QTimer): Таймер, который запускает события с заданным интервалом.
-
-    Методы:
-        on_time_out(): Обработчик события таймера, вызывается каждую секунду.
-        check_end_timer(): Проверяет, истёк ли таймер, и выполняет действия при завершении.
-        start(): Запускает таймер с интервалом в 1 секунду.
+        draw_time (callable): Callback для посекундного отображения оставшегося времени.
+                                Необходимо задать в вызывающем объекте.
     """
 
-    def __init__(self, seconds_left: int):
+    def __init__(self, main_object: object, seconds_left: int):
         """
         Инициализация таймера.
-
         Args:
-            seconds_left (int): Начальное количество секунд для таймера.
+            main_object (object): Вызывающий объект.
+            seconds_left (int): Начальное количество секунд таймера.
         """
-        self.seconds_left = seconds_left  # Стартовое значение времени таймера
-        self.draw_time = None  # Функция для обновления отображения оставшегося времени
+        self.main_object = main_object
+        self.tunes = Tunes()
+        self.inform_time_left = InformTimeLeft()
+        self.seconds_left = seconds_left  # Значение времени таймера
 
-        # Создаём объект QTimer, который будет отсчитывать интервал времени
-        self.timer = QTimer()
+        self.draw_time: Callable[[int], None] | None = (
+            None  # CallBack для обновления отображения оставшегося времени. Необходимо задать в вызывающем объекте.
+        )
 
-        # Запускаем таймер сразу после инициализации
-        self.start()
+        # Создаём объект, который будет отсчитывать время.
+        self.timer = PreciseTimer(C.TIMER_INTERVAL, self.on_time_out)
+        self.timer.start()  # Запускаем таймер
 
-    def on_time_out(self):
+    def on_time_out(self) -> None:
         """
         Обработчик события таймера, вызываемый каждую секунду.
-        Уменьшает количество оставшихся секунд, обновляет отображение времени,
-        отправляет уведомления и проверяет завершение таймера.
+        Уменьшает количество оставшихся секунд, проверяет завершение таймера, обновляет отображение времени,
+        и отправляет уведомления.
         """
-        # Уменьшаем количество оставшихся секунд на 1
         self.seconds_left -= 1
 
-        # Вызываем функцию для обновления отображения оставшегося времени
+        # Считываем переменные из настроек
+        voice_interval = self.tunes.get_tune(C.TUNE_VOICE_INTERVAL)
+        beep_interval = self.tunes.get_tune(C.TUNE_BEEP_INTERVAL)
+        beep_period_in_final = self.tunes.get_tune(C.TUNE_BEEP_PERIOD_IN_FINAL)
+
+        # Обновляем отображение оставшегося времени
         if self.draw_time is not None:
             self.draw_time(self.seconds_left)
 
-        # Проверяем, истёк ли таймер
-        self.check_end_timer()
+        # Проигрываем мелодию при завершении работы
+        if self.seconds_left <= 0:
+            self.inform_time_left.inform_done()
+            f.on_quit()
 
         # Отправляем голосовое уведомление об оставшемся времени
-        InformTimeLeft().inform_time_left(self.seconds_left)
+        if not self.seconds_left % voice_interval:
+            self.inform_time_left.inform_voice(self.seconds_left)
 
-        # Отправляем сигналы обратной связи (например, звуковые сигналы)
-        inform.inform_signal(self.seconds_left)
-
-    def check_end_timer(self):
-        """
-        Проверяет, истёк ли таймер.
-        Если время закончилось, отправляет уведомление и завершает работу программы.
-        """
-        if self.seconds_left <= 0:
-            # Отправляем уведомление о завершении таймера
-            inform.inform_done()
-
-            # Завершаем выполнение программы
-            on_quit()
-
-    def start(self):
-        """
-        Запускает таймер с интервалом в 1 секунду (1000 миллисекунд).
-        """
-        # Подключаем обработчик события (on_time_out) к сигналу timeout от QTimer
-        # noinspection PyUnresolvedReferences
-        self.timer.timeout.connect(self.on_time_out)
-
-        # Запускаем таймер. Интервал установлен на 1000 мс (1 секунда)
-        self.timer.start(1000)
+        # Отправляем звуковые сигналы если оставшиеся секунды кратны TUNE_VOICE_INTERVAL.
+        if self.seconds_left < beep_period_in_final:
+            if not self.seconds_left % beep_interval:
+                f.beep()

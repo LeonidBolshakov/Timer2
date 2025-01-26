@@ -1,16 +1,29 @@
 import sys
+import io
 from enum import Enum
-from functools import lru_cache
 
-import PyQt6
-from PyQt6.QtWidgets import QMainWindow, QLineEdit, QPushButton, QLabel, QApplication
-from PyQt6 import uic
+sys.stdout = io.StringIO()  # Заглушает вывод рекламы pygame
+import pygame  # type: ignore
+
+sys.stdout = sys.__stdout__  # Возвращает стандартный вывод
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QLineEdit,
+    QPushButton,
+    QLabel,
+    QApplication,
+    QWidget,
+)
+
+from PyQt6 import uic  # type: ignore
 from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import QRegularExpression
 
-import inform  # Модуль для работы с уведомлениями (например, звуковые сигналы)
-from clock import Clock  # Модуль для управления таймером
+from const import Const as C
+from clock import Clock  # Класс таймера
 import functions as f  # Вспомогательные функции
+
+from tunes import Tunes
 
 
 class TimeField(Enum):
@@ -40,17 +53,19 @@ class Timer2(QMainWindow):
     lineEdit_MS_M: QLineEdit  # Поле для ввода минут (режим ММ:СС)
     lineEdit_MS_S: QLineEdit  # Поле для ввода секунд
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Конструктор для инициализации основного окна.
         Устанавливает валидаторы, подключает события и задает начальные параметры.
         """
         super().__init__()
-        uic.loadUi("timer_2.ui", self)  # Загрузка интерфейса из файла .ui
+        uic.loadUi(C.FILE_UI, self)  # Загрузка интерфейса из файла .ui
 
-        self.clock = None  # Атрибут для хранения объекта Clock
+        self.clock: Clock | None = None  # Объект Clock
+        self.tunes = Tunes()  # объект настроек
+        self.tunes_window: Tunes | None = None
 
-        # Создание валидаторов для ввода времени
+        # Создание и назначение валидаторов для ввода времени
         self.validator_hour = QRegularExpressionValidator()
         self.validator_min_sec = QRegularExpressionValidator()
         self.set_validators()  # Установка правил валидации
@@ -58,22 +73,23 @@ class Timer2(QMainWindow):
 
         self.connect_signals()  # Подключение сигналов к обработчикам событий
         self.set_bolds()  # Установка жирного шрифта для полей ввода
+
         self.init_vars()  # Инициализация переменных и начальных значений
 
-    def set_validators(self):
+    def set_validators(self) -> None:
         """
         Устанавливает регулярные выражения для валидации ввода времени.
         """
         # Валидация для часов (0-23, пустое поле допустимо)
         self.validator_hour = QRegularExpressionValidator(
-            QRegularExpression(r"[0-9]|1[0-9]|2[0-3]")
+            QRegularExpression(C.RE_PATTERN_0_24)
         )
         # Валидация для минут и секунд (0-59, пустое поле допустимо)
         self.validator_min_sec = QRegularExpressionValidator(
-            QRegularExpression(r"[0-5][0-9]")
+            QRegularExpression(C.RE_PATTERN_0_60)
         )
 
-    def assign_validators(self):
+    def assign_validators(self) -> None:
         """
         Назначает валидаторы соответствующим полям ввода.
         """
@@ -82,7 +98,7 @@ class Timer2(QMainWindow):
         self.lineEdit_MS_M.setValidator(self.validator_min_sec)
         self.lineEdit_MS_S.setValidator(self.validator_min_sec)
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
         """
         Подключает сигналы компонентов пользовательского интерфейса к обработчикам событий.
         """
@@ -90,78 +106,65 @@ class Timer2(QMainWindow):
         self.btnStart.clicked.connect(self.on_btnStart_click)  # Кнопка "Старт"
         self.btnTunes.clicked.connect(self.on_btnTunes_click)  # Кнопка "Настройки"
         # Редактирование полей ввода времени
-        self.lineEdit_HM_H.textEdited.connect(self.on_lineEdit_HM_H_edited)
-        self.lineEdit_HM_M.textEdited.connect(self.on_lineEdit_HM_M_edited)
-        self.lineEdit_MS_M.textEdited.connect(self.on_lineEdit_MS_M_edited)
-        self.lineEdit_MS_S.textEdited.connect(self.on_lineEdit_MS_S_edited)
+        self.lineEdit_HM_H.textEdited.connect(
+            lambda: self.on_lineEdit_edited(self.lineEdit_HM_H, self.lineEdit_HM_M)
+        )
+        self.lineEdit_HM_M.textEdited.connect(
+            lambda: self.on_lineEdit_edited(self.lineEdit_HM_M, self.btnStart)
+        )
+        self.lineEdit_MS_M.textEdited.connect(
+            lambda: self.on_lineEdit_edited(self.lineEdit_MS_M, self.lineEdit_MS_S)
+        )
+        self.lineEdit_MS_S.textEdited.connect(
+            lambda: self.on_lineEdit_edited(self.lineEdit_MS_S, self.btnStart)
+        )
 
-    def set_bolds(self):
+    def set_bolds(self) -> None:
         """
         Устанавливает жирный шрифт для всех полей ввода времени.
         """
         for line_edit in (
-                self.lineEdit_HM_H,
-                self.lineEdit_HM_M,
-                self.lineEdit_MS_M,
-                self.lineEdit_MS_S,
+            self.lineEdit_HM_H,
+            self.lineEdit_HM_M,
+            self.lineEdit_MS_M,
+            self.lineEdit_MS_S,
         ):
             font = line_edit.font()
             font.setBold(True)
             line_edit.setFont(font)
 
-    def init_vars(self):
+    def init_vars(self) -> None:
         """
         Инициализирует начальные значения интерфейса и переменных.
         """
-        self.lblSec.setText("")  # Очищает метку для секунд
+        self.lblSec.setText(
+            ""
+        )  # Очищает метку для секунд. Задана в Qt Designer для служебных целей
         self.lineEdit_MS_M.setFocus()  # Устанавливает фокус на поле ввода минут в режиме ММ:СС
 
-    def on_btnStart_click(self):
+    def on_btnStart_click(self) -> None:
         """
         Обработчик нажатия кнопки "Старт".
-        Создает объект Clock и запускает таймер, если указано время.
+        Создает объект Clock и запускает таймер.
         """
-        # Проверка, что таймер еще не создан и время больше нуля
-        if self.clock is None and self.get_seconds_left() != 0:
-            self.clock = Clock(self.get_seconds_left())  # Создание объекта Clock
+        # Проверка, что таймер еще не создан и время задано
+        if self.clock is None and self.get_seconds_left():
+            self.clock = Clock(self, self.get_seconds_left())  # Создание объекта Clock
             self.clock.draw_time = (
                 self.draw_time
-            )  # Установка функции обновления времени
+            )  # Установка функции (callback) обновления времени
+            self.btnStart.setStyleSheet(C.WORKING_BUTTON_STYLE)
+            f.beep()  # Проигрывание звукового сигнала
 
-        inform.beep()  # Проигрывание звукового сигнала
-
-    def on_btnTunes_click(self):
+    def on_btnTunes_click(self) -> None:
         """
         Обработчик нажатия кнопки "Настройки".
-        Пока не реализован.
         """
-        pass
+        if self.tunes_window is None:
+            self.tunes_window = Tunes()
+        self.tunes_window.show()
 
-    def on_lineEdit_HM_H_edited(self, txt: str):
-        """
-        Обработчик изменения текста в поле ввода часов.
-        """
-        self.on_lineEdit_edited(txt, self.lineEdit_HM_M)
-
-    def on_lineEdit_HM_M_edited(self, txt: str):
-        """
-        Обработчик изменения текста в поле ввода минут (ЧЧ:ММ).
-        """
-        self.on_lineEdit_edited(txt, self.btnStart)
-
-    def on_lineEdit_MS_M_edited(self, txt: str):
-        """
-        Обработчик изменения текста в поле ввода минут (ММ:СС).
-        """
-        self.on_lineEdit_edited(txt, self.lineEdit_MS_S)
-
-    def on_lineEdit_MS_S_edited(self, txt: str):
-        """
-        Обработчик изменения текста в поле ввода секунд.
-        """
-        self.on_lineEdit_edited(txt, self.btnStart)
-
-    def draw_time(self, seconds_left: int):
+    def draw_time(self, seconds_left: int) -> None:
         """
         Обновляет отображение времени на экране.
 
@@ -177,11 +180,13 @@ class Timer2(QMainWindow):
                 self.draw_min_sec(minutes, sec)
             case TimeField.HM:
                 self.draw_hour_min(hour, minutes, sec)
+            case _:
+                pass
 
         if seconds_left <= 0:
             QApplication.processEvents()  # Обновление интерфейса
 
-    def draw_hour_min(self, hour: int, minutes: int, sec: int):
+    def draw_hour_min(self, hour: int, minutes: int, sec: int) -> None:
         """
         Отображает оставшееся время в формате ЧЧ:ММ.
         """
@@ -189,7 +194,7 @@ class Timer2(QMainWindow):
         self.lineEdit_HM_M.setText(f"{minutes:02}")
         self.lblSec.setText(f": {sec:02}")
 
-    def draw_min_sec(self, minutes: int, sec: int):
+    def draw_min_sec(self, minutes: int, sec: int) -> None:
         """
         Отображает оставшееся время в формате ММ:СС.
         """
@@ -198,23 +203,48 @@ class Timer2(QMainWindow):
 
     def get_seconds_left(self) -> int:
         """
-        Вычисляет общее оставшееся время в секундах в зависимости от режима.
+        Вычисляет общее оставшееся время в секундах.
 
         Returns:
             int: Общее количество оставшихся секунд.
         """
         match self.active_time_field():
             case TimeField.MS:
-                return f.num(self.lineEdit_MS_M) * 60 + f.num(self.lineEdit_MS_S)
+                return f.num(self.lineEdit_MS_M) * C.SECONDS_IN_MINUTE + f.num(
+                    self.lineEdit_MS_S
+                )
             case TimeField.HM:
-                return f.num(self.lineEdit_HM_H) * 3600 + f.num(self.lineEdit_HM_M) * 60
+                return (
+                    f.num(self.lineEdit_HM_H) * C.SECONDS_IN_HOUR
+                    + f.num(self.lineEdit_HM_M) * C.SECONDS_IN_MINUTE
+                )
             case _:
                 return 0
 
-    @lru_cache
-    def active_time_field(self) -> TimeField | None:
+    def active_time_field(self, widget: QLineEdit | None = None) -> TimeField | None:
         """
         Определяет активное поле ввода времени (ЧЧ:ММ или ММ:СС).
+
+        Returns:
+            TimeField | None: Активное поле ввода или None.
+        """
+        match widget:
+            case None:
+                return self._active_time_field()
+            case self.lineEdit_HM_H | self.lineEdit_HM_M:
+                return TimeField.HM
+            case self.lineEdit_MS_M | self.lineEdit_MS_S:
+                return TimeField.MS
+            case _:
+                f.inform_fatal_error(
+                    C.TITLE_INTERNAL_ERROR,
+                    f"{C.TEXT_ERROR_PARAM}\n{widget.objectName()=}",
+                )
+
+    def _active_time_field(self):
+        """
+        Определяет активное поле ввода времени (ЧЧ:ММ или ММ:СС),
+        в случае, если поле ввода времени не было изменено
 
         Returns:
             TimeField | None: Активное поле ввода или None.
@@ -225,53 +255,66 @@ class Timer2(QMainWindow):
             return TimeField.HM
         return None
 
-    def on_lineEdit_edited(self, txt: str, focus):
+    def on_lineEdit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
         """
         Обработчик изменения текста в любом поле ввода.
         Обновляет стили полей ввода в зависимости от активного режима и устанавливает фокус.
 
         Args:
-            txt (str): Введенный текст.
-            focus: Поле ввода, на которое нужно переместить фокус.
+            widget (str): Виджет, в который введена информация.
+            focus: Виджет, на который нужно переместить фокус, по завершению ввода
         """
-        # Определение стилей для активного и неактивного состояния полей
-        active_style = (
-            "QLineEdit { background-color: #f5ffb3; }"  # Желтый фон для активных полей
-        )
-        inactive_style = (
-            "QLineEdit { background-color: white; }"  # Белый фон для неактивных полей
-        )
 
-        # Определяем активное поле ввода на основе текущего режима
-        match self.active_time_field():
+        # Активируем/деактивируем поля ввода времени
+        match self.active_time_field(widget):
             case TimeField.HM:  # Режим ЧЧ:ММ
-                # Очистка полей для секунд и минут (ММ:СС)
-                self.lineEdit_MS_M.clear()
-                self.lineEdit_MS_S.clear()
-
-                # Применение активного стиля к полям ЧЧ:ММ
-                self.lineEdit_HM_H.setStyleSheet(active_style)
-                self.lineEdit_HM_M.setStyleSheet(active_style)
-
-                # Применение неактивного стиля к полям ММ:СС
-                self.lineEdit_MS_M.setStyleSheet(inactive_style)
-                self.lineEdit_MS_S.setStyleSheet(inactive_style)
+                self.activate_time_input_widgets(
+                    self.lineEdit_HM_H,
+                    self.lineEdit_HM_M,
+                    self.lineEdit_MS_M,
+                    self.lineEdit_MS_S,
+                )
             case TimeField.MS:  # Режим ММ:СС
-                # Очистка полей для часов и минут (ЧЧ:ММ)
-                self.lineEdit_HM_H.clear()
-                self.lineEdit_HM_M.clear()
-
-                # Применение активного стиля к полям ММ:СС
-                self.lineEdit_MS_M.setStyleSheet(active_style)
-                self.lineEdit_MS_S.setStyleSheet(active_style)
-
-                # Применение неактивного стиля к полям ЧЧ:ММ
-                self.lineEdit_HM_H.setStyleSheet(inactive_style)
-                self.lineEdit_HM_M.setStyleSheet(inactive_style)
+                self.activate_time_input_widgets(
+                    self.lineEdit_MS_M,
+                    self.lineEdit_MS_S,
+                    self.lineEdit_HM_H,
+                    self.lineEdit_HM_M,
+                )
+            case _:
+                f.inform_fatal_error(C.TITLE_INTERNAL_ERROR, C.TEXT_ERROR_UNKNOWN)
 
         # Если длина введенного текста достигает 2 символов, перемещаем фокус на следующее поле
-        if len(txt) == 2:
+        if len(widget.text()) == 2:
             focus.setFocus()
+
+    @staticmethod
+    def activate_time_input_widgets(
+        active_1: QLineEdit,
+        active_2: QLineEdit,
+        inactive_1: QLineEdit,
+        inactive_2: QLineEdit,
+    ) -> None:
+        """
+        Активируем / деактивируем поля ввода времени
+        :param active_1: Виджет, который следует сделать активным.
+        :param active_2: Виджет, который следует сделать активным.
+        :param inactive_1: Виджет, который следует сделать НЕ активным.
+        :param inactive_2: Виджет, который следует сделать НЕ активным.
+        :return: None
+        """
+
+        # Очистка неактивных полей
+        inactive_1.clear()
+        inactive_2.clear()
+
+        # Применение к неактивным виджетам неактивного стиля
+        inactive_1.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
+        inactive_2.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
+
+        # Применение к активным виджетам активного стиля
+        active_1.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
+        active_2.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
 
     def start(self) -> int:
         """
@@ -281,13 +324,20 @@ class Timer2(QMainWindow):
             int: Код завершения приложения.
         """
         self.show()  # Отображает главное окно
-        return PyQt6.QtWidgets.QApplication.exec()  # Запускает основной цикл приложения
+        return QApplication.exec()  # Запускает основной цикл приложения
 
 
 # Запуск приложения
 if __name__ == "__main__":
+
+    def on_app_exit():
+        """При завершении приложения прекращаем проигрывание музыки"""
+        pygame.mixer.quit()
+
     # Создаем экземпляр приложения PyQt
-    app = PyQt6.QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
+
+    app.aboutToQuit.connect(on_app_exit)
 
     # Создаем экземпляр главного окна таймера
     timer_2_app = Timer2()

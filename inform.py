@@ -1,35 +1,49 @@
 import threading  # Для работы с потоками
-import pyttsx3  # Для синтеза речи
-from PyQt6.QtWidgets import QApplication  # Для работы с графическим интерфейсом
-from playsound import playsound  # Для воспроизведения звуков
+import sys
+import io
 
-# pip install --upgrade setuptools wheel
-# pip install playsound
-# pip install playsound==1.2.2
+import pyttsx3  # type: ignore # Для синтеза речи
+from PyQt6.QtCore import QEventLoop, pyqtSignal, QObject, QTimer
+
+sys.stdout = io.StringIO()  # Заглушает вывод рекламы
+import pygame  # type: ignore
+
+sys.stdout = sys.__stdout__
 
 import functions as f  # Импорт пользовательских функций
+from const import Const as C
+from tunes import Tunes
 
 
-class InformTimeLeft:
+class InformTimeLeft(QObject):
     """
     Класс для голосового информирования об оставшемся времени.
 
-    Атрибуты:
-        voice_engine (pyttsx3.Engine): Движок синтеза речи для воспроизведения текста вслух.
-
     Методы:
-        voice(seconds: int): Преобразует оставшееся время в текст и воспроизводит его голосом.
+        inform_voice(seconds: int): Преобразует оставшееся время в текст и воспроизводит его голосом
         inform_time_left(seconds: int): Информирует пользователя голосом через заданные интервалы времени.
     """
 
-    def __init__(self):
+    melodyFinished = (
+        pyqtSignal()
+    )  # Сигнал о завершении проигрывания мелодии, завершающей таймер
+
+    def __init__(self) -> None:
         """
         Инициализация класса InformTimeLeft.
         Создаёт экземпляр движка синтеза речи (pyttsx3).
         """
-        self.voice_engine = pyttsx3.init()  # Инициализация синтезатора речи
+        super().__init__()
 
-    def voice(self, seconds: int):
+        try:
+            self.voice_engine = pyttsx3.init()  # Инициализация синтезатора речи
+        except Exception as e:
+            f.inform_fatal_error(
+                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_INIT_SPEECH}\n{e}"
+            )
+        self.tunes = Tunes()
+
+    def voice(self, seconds: int) -> None:
         """
         Преобразует количество оставшихся секунд в текст и воспроизводит его голосом.
 
@@ -40,48 +54,51 @@ class InformTimeLeft:
             f.time_to_text(seconds)
         )  # Преобразуем секунды в текст и передаём синтезатору речи
         self.voice_engine.runAndWait()  # Запускаем воспроизведение речи
+        return
 
-    def inform_time_left(self, seconds: int):
+    def inform_voice(self, seconds: int) -> None:
         """
-        Информирует голосом об оставшемся времени через определённые интервалы (каждые 7 секунд).
+        Информирует голосом об оставшемся времени через определённые интервалы
+        (каждые INTERVAL_VOICE_MESSAGE секунд).
         Запускает воспроизведение речи в отдельном потоке, чтобы не блокировать выполнение программы.
 
         Args:
             seconds (int): Оставшееся время в секундах.
         """
-        # Если секунды не кратны 7, ничего не делаем
-        if seconds % 7:
-            return
 
         # Создаём и запускаем отдельный поток для голосового оповещения
         thread = threading.Thread(target=self.voice, args=(seconds,))
         thread.start()
         return
 
+    def inform_done(self) -> None:
+        """
+        Воспроизводит мелодию, информирующую о завершении работы таймера.
+        """
+        file_melody = self.tunes.get_tune(C.TUNE_FILE_MELODY)
+        if file_melody:
+            try:
+                pygame.mixer.init()
+                pygame.mixer.music.load(file_melody)
+                pygame.mixer.music.play()  # Обращение к pygame.mixer для проигрывания музыки
+            except Exception as e:
+                f.inform_fatal_error(
+                    C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_PLAY_MELODY}\n{e}"
+                )
+            self.control_end_of_melody()
 
-def inform_done():
-    """
-    Воспроизводит звуковой сигнал, информирующий о завершении работы таймера.
-    Использует файл `example.mp3` для воспроизведения.
-    """
-    playsound("example.mp3")  # Воспроизводим файл звука
+    def control_end_of_melody(self):
+        """Ожидает получения сигнала завершения проигрывания мелодии.
+        При получении сигнала прекращает ожидание"""
+        timer = QTimer()
+        timer.timeout.connect(self.check__music__finished)
+        timer.start(C.MELODY_COMPLETION_INTERVAL)
+        loop = QEventLoop()
+        self.melodyFinished.connect(loop.quit)
+        loop.exec()  # Ожидание окончания проигрывания
 
-
-def inform_signal(seconds):
-    """
-    Отправляет звуковой сигнал, если до завершения таймера осталось менее 10 секунд
-    и текущее количество секунд нечётное.
-
-    Args:
-        seconds (int): Оставшееся время в секундах.
-    """
-    # Проверяем, если осталось менее 10 секунд и секунды нечётные
-    if seconds < 10 and seconds % 2:
-        beep()  # Воспроизводим звуковой сигнал
-
-
-def beep():
-    """
-    Воспроизводит короткий звуковой сигнал (системный звуковой сигнал приложения).
-    """
-    QApplication.beep()  # Используем стандартный метод для воспроизведения системного сигнала
+    def check__music__finished(self):
+        """Эмитирует сигнал, если проигрывание мелодии завершилось -"""
+        if not pygame.mixer.music.get_busy():
+            # noinspection PyUnresolvedReferences
+            self.melodyFinished.emit()
