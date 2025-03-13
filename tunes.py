@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QDialogButtonBox,
 )
+from pywin.debugger import close
 
 import functions as f
 
@@ -47,7 +48,7 @@ class Tunes(QWidget):
 
     def connections(self):
         """Назначение программ обработки сигналов"""
-        self.btnBoxOk.clicked.connect(quit)
+        self.btnBoxOk.clicked.connect(self.hide)
         self.toolBtnMelody.clicked.connect(self.on_toolBtnMelody)
         self.lnEdVoiceInterval.editingFinished.connect(
             lambda: self.input_completed(C.TUNE_VOICE_INTERVAL)

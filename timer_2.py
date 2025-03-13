@@ -160,7 +160,7 @@ class Timer2(QMainWindow):
             self.tunes_window is None
         ):  # Защита от создания многих окон при повторном нажатии кнопки.
             self.tunes_window = Tunes()
-        self.tunes_window.show()  # Self.tunes_window не закрыт. Продолжаем с ним работать.
+        self.tunes_window.show()
 
     def draw_time(self, seconds_left: int) -> None:
         """
