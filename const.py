@@ -40,7 +40,10 @@ class Const:
     TEXT_ERROR_UNKNOWN = "Не известная ошибка"
     TITLE_INTERNAL_ERROR = "Внутренняя ошибка"
     TEXT_INTERNAL_ERROR = "Внутренняя ошибка: Экземпляр приложения не существует!"
+    TITLE_ERROR_SPEACH = "Инициализация синтезатора речи"
     TEXT_NO_INIT_SPEECH = "Не удалось инициировать синтезатор речи"
+    TITLE_NO_MELODY = "Не задана мелодия"
+    TEXT_NO_MELODY = "Не задана мелодия окончания таймера"
     TEXT_NO_PLAY_MELODY = "Ошибка при инициализации/использования проигрывателя музыки"
     TEXT_ERROR_PARAM = (
         "методу timer_2.active_time_field передан непредусмотренный параметр widget."
@@ -53,7 +56,6 @@ class Const:
     INACTIVE_FIELD_BG_COLOR = (
         "QLineEdit { background-color: white; }"  # Белый фон для неактивных полей
     )
-    WORKING_BUTTON_STYLE = "background-color: #0080ff;"  # border: 2px solid red;
     FORMS_HOUR = [
         "часов",
         "час",

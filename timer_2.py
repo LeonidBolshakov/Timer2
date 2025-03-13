@@ -69,12 +69,11 @@ class Timer2(QMainWindow):
         self.validator_hour = QRegularExpressionValidator()
         self.validator_min_sec = QRegularExpressionValidator()
         self.set_validators()  # Установка правил валидации
-        self.assign_validators()  # Назначение валидаторов полям ввода
 
         self.connect_signals()  # Подключение сигналов к обработчикам событий
         self.set_bolds()  # Установка жирного шрифта для полей ввода
 
-        self.init_vars()  # Инициализация переменных и начальных значений
+        self.init_vars()  # Инициализация переменных
 
     def set_validators(self) -> None:
         """
@@ -89,10 +88,7 @@ class Timer2(QMainWindow):
             QRegularExpression(C.RE_PATTERN_0_60)
         )
 
-    def assign_validators(self) -> None:
-        """
-        Назначает валидаторы соответствующим полям ввода.
-        """
+        # Назначает валидаторы соответствующим полям ввода.
         self.lineEdit_HM_H.setValidator(self.validator_hour)
         self.lineEdit_HM_M.setValidator(self.validator_min_sec)
         self.lineEdit_MS_M.setValidator(self.validator_min_sec)
@@ -105,7 +101,8 @@ class Timer2(QMainWindow):
         self.btnQuit.clicked.connect(f.go_quit)  # Кнопка "Выход"
         self.btnStart.clicked.connect(self.on_btnStart_click)  # Кнопка "Старт"
         self.btnTunes.clicked.connect(self.on_btnTunes_click)  # Кнопка "Настройки"
-        # Редактирование полей ввода времени
+
+        # Обработка окончания редактирования полей ввода времени
         self.lineEdit_HM_H.textEdited.connect(
             lambda: self.on_lineEdit_edited(self.lineEdit_HM_H, self.lineEdit_HM_M)
         )
@@ -128,7 +125,7 @@ class Timer2(QMainWindow):
             self.lineEdit_HM_M,
             self.lineEdit_MS_M,
             self.lineEdit_MS_S,
-        ):
+        ):  # Поля ввода времени
             font = line_edit.font()
             font.setBold(True)
             line_edit.setFont(font)
@@ -140,7 +137,6 @@ class Timer2(QMainWindow):
         self.lblSec.setText(
             ""
         )  # Очищает метку для секунд. Задана в Qt Designer для служебных целей
-        self.lineEdit_MS_M.setFocus()  # Устанавливает фокус на поле ввода минут в режиме ММ:СС
 
     def on_btnStart_click(self) -> None:
         """
@@ -149,20 +145,22 @@ class Timer2(QMainWindow):
         """
         # Создание таймера
         if self.clock is None and self.get_seconds_left():
-            self.clock = Clock(self.get_seconds_left())  # Создание объекта Clock
-            self.clock.draw_time = (
-                self.draw_time
-            )  # Установка callback. Метод прорисовывает оставшееся время обновления времени
-            self.btnStart.setStyleSheet(C.WORKING_BUTTON_STYLE)
-            f.beep()  # Проигрывание звукового сигнала
+            self.clock = Clock(
+                self.get_seconds_left(), self.draw_time
+            )  # Создание объекта Clock
+            self.clock.start()  # Старт таймера
+            self.btnStart.setDisabled(True)  # Кнопка больше НЕ нужна
+            f.beep()
 
     def on_btnTunes_click(self) -> None:
         """
         Обработчик нажатия кнопки "Настройки".
         """
-        if self.tunes_window is None:
+        if (
+            self.tunes_window is None
+        ):  # Защита от создания многих окон при повторном нажатии кнопки.
             self.tunes_window = Tunes()
-        self.tunes_window.show()
+        self.tunes_window.show()  # Self.tunes_window не закрыт. Продолжаем с ним работать.
 
     def draw_time(self, seconds_left: int) -> None:
         """
@@ -182,9 +180,6 @@ class Timer2(QMainWindow):
                 self.draw_hour_min(hour, minutes, sec)
             case _:
                 pass
-
-        if seconds_left <= 0:
-            QApplication.processEvents()  # Обновление интерфейса
 
     def draw_hour_min(self, hour: int, minutes: int, sec: int) -> None:
         """
@@ -258,11 +253,11 @@ class Timer2(QMainWindow):
     def on_lineEdit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
         """
         Обработчик изменения текста в любом поле ввода.
-        Обновляет стили полей ввода в зависимости от активного режима и устанавливает фокус.
+        Устанавливает стили полей ввода и, при необходимости, устанавливает фокус.
 
         Args:
             widget (str): Виджет, в который введена информация.
-            focus: Виджет, на который нужно переместить фокус, по завершению ввода
+            focus: Виджет, на который, при необходимости, нужно переместить фокус.
         """
 
         # Активируем/деактивируем поля ввода времени
@@ -304,7 +299,7 @@ class Timer2(QMainWindow):
         :return: None
         """
 
-        # Очистка неактивных полей
+        # Очистка неактивных виджетов
         inactive_1.clear()
         inactive_2.clear()
 

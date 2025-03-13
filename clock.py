@@ -1,3 +1,4 @@
+from typing import Callable
 from inform import InformTime
 from precise_timer import PreciseTimer
 from tunes import Tunes
@@ -15,25 +16,25 @@ class Clock:
                         Функция должна быть задана вызывающей программой
     """
 
-    def __init__(self, seconds_left: int):
+    def __init__(self, seconds_left: int, draw_time: Callable[[int], None]):
         """
         Инициализация таймера.
 
         Args:
             seconds_left (int): Начальное количество секунд для таймера.
+            draw_time (Callable[[int], None]) - callback для обновления отображения оставшегося времени
         """
         self.seconds_left = seconds_left  # Значение времени таймера
-        self.draw_time = None  # Функция для обновления отображения оставшегося времени
+        self.draw_time = draw_time
         self.tunes = Tunes()
 
-        # Создаём и запускаем объект QTimer, который будет отсчитывать интервал времени
+        # Создаём и запускаем объект, который будет отсчитывать интервалы времени
         self.timer = PreciseTimer(C.TIMER_INTERVAL, self.on_time_out)
-        self.timer.start()
 
     def on_time_out(self):
         """
         Обработчик события таймера, вызываемый каждую секунду.
-        Отправляет уведомления и проверяет завершение таймера.
+        Отправляет уведомления о наступивших событиях.
         """
 
         self.seconds_left -= 1
@@ -43,15 +44,16 @@ class Clock:
         beep_period_in_final = self.tunes.get_tune(C.TUNE_BEEP_PERIOD_IN_FINAL)
 
         # Отображение оставшегося времени
-        if self.draw_time is not None:
-            self.draw_time(self.seconds_left)
+        self.draw_time(self.seconds_left)
 
         # Уведомление об окончании таймера
         if self.is_end_timer():
             inform_time.inform_done()
+
         # Уведомление об оставшемся времени
         if not self.seconds_left % voice_interval:
             inform_time.inform_voice(self.seconds_left)
+
         # Уведомление о скором завершении таймера
         if (
             self.seconds_left < beep_period_in_final
@@ -62,10 +64,12 @@ class Clock:
     def is_end_timer(self) -> bool:
         """
         Проверяет, истёк ли таймер.
-        Если время закончилось, отправляет уведомление и завершает работу программы.
         :return True если таймер завершился, False - если НЕ завершился
         """
         if self.seconds_left <= 0:
             # Завершаем выполнение программы
             return True
         return False
+
+    def start(self):
+        self.timer.start()

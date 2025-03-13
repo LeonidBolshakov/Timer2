@@ -4,7 +4,14 @@ from pathlib import Path
 
 from PyQt6 import uic
 from PyQt6.QtGui import QIntValidator
-from PyQt6.QtWidgets import QWidget, QLineEdit, QToolButton, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import (
+    QWidget,
+    QLineEdit,
+    QToolButton,
+    QFileDialog,
+    QMessageBox,
+    QDialogButtonBox,
+)
 
 import functions as f
 
@@ -15,6 +22,7 @@ from const import Const as C, TuneDescr
 class Tunes(QWidget):
     """Класс для работы с настройками программы"""
 
+    btnBoxOk: QDialogButtonBox
     lnEdVoiceInterval: QLineEdit
     lnEdBeepInterval: QLineEdit
     lnEdBeepPeriodInFinal: QLineEdit
@@ -39,6 +47,7 @@ class Tunes(QWidget):
 
     def connections(self):
         """Назначение программ обработки сигналов"""
+        self.btnBoxOk.clicked.connect(quit)
         self.toolBtnMelody.clicked.connect(self.on_toolBtnMelody)
         self.lnEdVoiceInterval.editingFinished.connect(
             lambda: self.input_completed(C.TUNE_VOICE_INTERVAL)
@@ -96,13 +105,15 @@ class Tunes(QWidget):
         """
         Формирует настройки по умолчанию.
         Настройки по умолчанию заданы в классе констант. Их имена начинаются на 'TUNE_'
-        :return: Словарь настроек.
+        :returns: Словарь настроек.
         """
 
         # Формирование словаря настроек со значениями по умолчанию.
         return {
             key: value.default
-            for key, value in vars(C).items()
+            for key, value in vars(
+                C
+            ).items()  # цикл по всем переменным словаря констант
             if key.startswith("TUNE_")
         }  # Пробегаем по всем константам и выбираем нужные.
 

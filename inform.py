@@ -38,9 +38,7 @@ class InformTime(QObject):
         try:
             self.voice_engine = pyttsx3.init()  # Инициализация синтезатора речи
         except Exception as e:
-            f.inform_fatal_error(
-                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_INIT_SPEECH}\n{e}"
-            )
+            f.inform_fatal_error(C.TITLE_ERROR_SPEACH, f"{C.TEXT_NO_INIT_SPEECH}\n{e}")
         self.tunes = Tunes()
 
     def voice(self, seconds: int) -> None:
@@ -50,19 +48,16 @@ class InformTime(QObject):
         Args:
             seconds (int): Оставшееся время в секундах.
         """
-        self.voice_engine.say(
-            f.time_to_text(seconds)
-        )  # Преобразуем секунды в текст и передаём синтезатору речи
+        self.voice_engine.say(f.time_to_text(seconds))  # Преобразуем секунды в текст
         try:
             self.voice_engine.runAndWait()  # Запускаем воспроизведение речи
         except RuntimeError:
-            pass
+            pass  # Игнорируем вывод нового сообщения до окончания вывода предыдущего
         return
 
     def inform_voice(self, seconds: int) -> None:
         """
-        Информирует голосом об оставшемся времени через определённые интервалы
-        (каждые INTERVAL_VOICE_MESSAGE секунд).
+        Информирует голосом об оставшемся времени.
         Запускает воспроизведение речи в отдельном потоке, чтобы не блокировать выполнение программы.
 
         Args:
@@ -83,15 +78,17 @@ class InformTime(QObject):
             try:
                 pygame.mixer.init()
                 pygame.mixer.music.load(file_melody)
-                pygame.mixer.music.play()  # Обращение к pygame.mixer для проигрывания музыки
+                pygame.mixer.music.play()  # Обращение к pygame.mixer для проигрывания мелодии
             except Exception as e:
                 f.inform_fatal_error(
                     C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_PLAY_MELODY}\n{e}"
                 )
             self.control_end_of_melody()
             f.go_quit()
+        else:
+            f.inform_fatal_error(C.TITLE_NO_MELODY, C.TEXT_NO_MELODY)
 
-    def control_end_of_melody(self):
+    def control_end_of_melody(self)-> None:
         """Ожидает получения сигнала завершения проигрывания мелодии.
         При получении сигнала прекращает ожидание"""
         timer = QTimer()
@@ -101,7 +98,7 @@ class InformTime(QObject):
         self.melodyFinished.connect(loop.quit)
         loop.exec()  # Ожидание окончания проигрывания
 
-    def check__music__finished(self):
+    def check__music__finished(self)-> None:
         """Эмитирует сигнал, если проигрывание мелодии завершилось -"""
         if not pygame.mixer.music.get_busy():
             # noinspection PyUnresolvedReferences
