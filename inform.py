@@ -15,7 +15,7 @@ from const import Const as C
 from tunes import Tunes
 
 
-class InformTimeLeft(QObject):
+class InformTime(QObject):
     """
     Класс для голосового информирования об оставшемся времени.
 
@@ -53,7 +53,10 @@ class InformTimeLeft(QObject):
         self.voice_engine.say(
             f.time_to_text(seconds)
         )  # Преобразуем секунды в текст и передаём синтезатору речи
-        self.voice_engine.runAndWait()  # Запускаем воспроизведение речи
+        try:
+            self.voice_engine.runAndWait()  # Запускаем воспроизведение речи
+        except RuntimeError:
+            pass
         return
 
     def inform_voice(self, seconds: int) -> None:
@@ -86,6 +89,7 @@ class InformTimeLeft(QObject):
                     C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_PLAY_MELODY}\n{e}"
                 )
             self.control_end_of_melody()
+            f.go_quit()
 
     def control_end_of_melody(self):
         """Ожидает получения сигнала завершения проигрывания мелодии.

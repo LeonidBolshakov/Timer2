@@ -102,7 +102,7 @@ class Timer2(QMainWindow):
         """
         Подключает сигналы компонентов пользовательского интерфейса к обработчикам событий.
         """
-        self.btnQuit.clicked.connect(f.on_quit)  # Кнопка "Выход"
+        self.btnQuit.clicked.connect(f.go_quit)  # Кнопка "Выход"
         self.btnStart.clicked.connect(self.on_btnStart_click)  # Кнопка "Старт"
         self.btnTunes.clicked.connect(self.on_btnTunes_click)  # Кнопка "Настройки"
         # Редактирование полей ввода времени
@@ -147,12 +147,12 @@ class Timer2(QMainWindow):
         Обработчик нажатия кнопки "Старт".
         Создает объект Clock и запускает таймер.
         """
-        # Проверка, что таймер еще не создан и время задано
+        # Создание таймера
         if self.clock is None and self.get_seconds_left():
-            self.clock = Clock(self, self.get_seconds_left())  # Создание объекта Clock
+            self.clock = Clock(self.get_seconds_left())  # Создание объекта Clock
             self.clock.draw_time = (
                 self.draw_time
-            )  # Установка функции (callback) обновления времени
+            )  # Установка callback. Метод прорисовывает оставшееся время обновления времени
             self.btnStart.setStyleSheet(C.WORKING_BUTTON_STYLE)
             f.beep()  # Проигрывание звукового сигнала
 

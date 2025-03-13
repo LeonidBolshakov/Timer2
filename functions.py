@@ -24,7 +24,7 @@ def num(line_edit: QLineEdit) -> int:
     )  # Если текст не пустой, преобразуем его в число, иначе возвращаем 0
 
 
-def on_quit() -> None:
+def go_quit() -> None:
     """
     Завершает выполнение программы, вызывая метод `quit()` у текущего экземпляра QApplication.
     """
@@ -149,4 +149,4 @@ def inform_fatal_error(title: str, text: str) -> None:
     :return:
     """
     QMessageBox.warning(None, title, text)
-    on_quit()
+    go_quit()
