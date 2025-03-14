@@ -14,7 +14,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QWidget,
 )
-
 from PyQt6 import uic  # type: ignore
 from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import QRegularExpression
@@ -22,6 +21,7 @@ from PyQt6.QtCore import QRegularExpression
 from const import Const as C
 from clock import Clock  # Класс таймера
 import functions as f  # Вспомогательные функции
+from inform import InformTime
 
 from tunes import Tunes
 
@@ -62,6 +62,7 @@ class Timer2(QMainWindow):
         uic.loadUi(C.FILE_UI, self)  # Загрузка интерфейса из файла .ui
 
         self.clock: Clock | None = None  # Объект Clock
+        self.inform_tune = InformTime()
         self.tunes = Tunes()  # объект настроек
         self.tunes_window: Tunes | None = None
 
@@ -143,11 +144,12 @@ class Timer2(QMainWindow):
         Обработчик нажатия кнопки "Старт".
         Создает объект Clock и запускает таймер.
         """
-        # Создание таймера
+        # Создание и настройка таймера
         if self.clock is None and self.get_seconds_left():
-            self.clock = Clock(
-                self.get_seconds_left(), self.draw_time
-            )  # Создание объекта Clock
+            self.clock = Clock(self.get_seconds_left())
+            self.clock.connect("draw_time", self.draw_time)
+            self.clock.connect("inform_voice", self.inform_tune.inform_voice)
+            self.clock.connect("inform_done", self.inform_tune.inform_done)
             self.clock.start()  # Старт таймера
             self.btnStart.setDisabled(True)  # Кнопка больше НЕ нужна
             f.beep()

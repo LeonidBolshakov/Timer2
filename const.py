@@ -42,6 +42,7 @@ class Const:
     TEXT_INTERNAL_ERROR = "Внутренняя ошибка: Экземпляр приложения не существует!"
     TITLE_ERROR_SPEACH = "Инициализация синтезатора речи"
     TEXT_NO_INIT_SPEECH = "Не удалось инициировать синтезатор речи"
+    TEXT_ERROR_CALLBACK = "Класс Clock. Неверно указана функция callback - "
     TITLE_NO_MELODY = "Не задана мелодия"
     TEXT_NO_MELODY = "Не задана мелодия окончания таймера"
     TEXT_NO_PLAY_MELODY = "Ошибка при инициализации/использования проигрывателя музыки"

@@ -34,12 +34,12 @@ class InformTime(QObject):
         Создаёт экземпляр движка синтеза речи (pyttsx3).
         """
         super().__init__()
+        self.tunes = Tunes()
 
         try:
             self.voice_engine = pyttsx3.init()  # Инициализация синтезатора речи
         except Exception as e:
             f.inform_fatal_error(C.TITLE_ERROR_SPEACH, f"{C.TEXT_NO_INIT_SPEECH}\n{e}")
-        self.tunes = Tunes()
 
     def voice(self, seconds: int) -> None:
         """
@@ -88,7 +88,7 @@ class InformTime(QObject):
         else:
             f.inform_fatal_error(C.TITLE_NO_MELODY, C.TEXT_NO_MELODY)
 
-    def control_end_of_melody(self)-> None:
+    def control_end_of_melody(self) -> None:
         """Ожидает получения сигнала завершения проигрывания мелодии.
         При получении сигнала прекращает ожидание"""
         timer = QTimer()
@@ -98,7 +98,7 @@ class InformTime(QObject):
         self.melodyFinished.connect(loop.quit)
         loop.exec()  # Ожидание окончания проигрывания
 
-    def check__music__finished(self)-> None:
+    def check__music__finished(self) -> None:
         """Эмитирует сигнал, если проигрывание мелодии завершилось -"""
         if not pygame.mixer.music.get_busy():
             # noinspection PyUnresolvedReferences

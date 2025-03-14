@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QDialogButtonBox,
 )
-from pywin.debugger import close
 
 import functions as f
 

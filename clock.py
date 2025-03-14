@@ -1,9 +1,8 @@
 from typing import Callable
-from inform import InformTime
 from precise_timer import PreciseTimer
 from tunes import Tunes
 from const import Const as C
-from functions import beep
+import functions as f
 
 
 class Clock:
@@ -16,16 +15,15 @@ class Clock:
                         Функция должна быть задана вызывающей программой
     """
 
-    def __init__(self, seconds_left: int, draw_time: Callable[[int], None]):
+    def __init__(self, seconds_left: int):
         """
         Инициализация таймера.
 
         Args:
             seconds_left (int): Начальное количество секунд для таймера.
-            draw_time (Callable[[int], None]) - callback для обновления отображения оставшегося времени
         """
         self.seconds_left = seconds_left  # Значение времени таймера
-        self.draw_time = draw_time
+        self.connections = dict()
         self.tunes = Tunes()
 
         # Создаём и запускаем объект, который будет отсчитывать интервалы времени
@@ -38,28 +36,27 @@ class Clock:
         """
 
         self.seconds_left -= 1
-        inform_time = InformTime()
         voice_interval = self.tunes.get_tune(C.TUNE_VOICE_INTERVAL)
         beep_interval = self.tunes.get_tune(C.TUNE_BEEP_INTERVAL)
         beep_period_in_final = self.tunes.get_tune(C.TUNE_BEEP_PERIOD_IN_FINAL)
 
         # Отображение оставшегося времени
-        self.draw_time(self.seconds_left)
+        self.callback("draw_time", self.seconds_left)
 
         # Уведомление об окончании таймера
         if self.is_end_timer():
-            inform_time.inform_done()
+            self.callback("inform_done")
 
         # Уведомление об оставшемся времени
         if not self.seconds_left % voice_interval:
-            inform_time.inform_voice(self.seconds_left)
+            self.callback("inform_voice", self.seconds_left)
 
         # Уведомление о скором завершении таймера
         if (
             self.seconds_left < beep_period_in_final
             and not self.seconds_left % beep_interval
         ):
-            beep()
+            f.beep()
 
     def is_end_timer(self) -> bool:
         """
@@ -71,5 +68,32 @@ class Clock:
             return True
         return False
 
+    def connect(self, name_callback: str, func: Callable):
+        """
+        Регистрация callback функции.
+        Args:
+            name_callback (str): - имя функции, используется в методе callback
+            func (Callable): - ссылка на регистрируемую функцию
+        """
+        self.connections[name_callback] = func
+
+    def callback(self, func_name: str, param: int | None = None) -> None:
+        """
+        Вызывает callback функцию. Ссылки на функции хранятся в словаре self.connections
+        Args:
+            func_name(str): имя вызываемой функции
+            param: - параметр, передаваемый функции
+        """
+        try:
+            if param is None:
+                self.connections[func_name]()
+            else:
+                self.connections[func_name](param)
+        except Exception as e:
+            f.inform_fatal_error(
+                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_ERROR_CALLBACK} {func_name} \n{e}"
+            )
+
     def start(self):
+        """Старт точного таймера"""
         self.timer.start()
