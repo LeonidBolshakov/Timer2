@@ -22,7 +22,6 @@ from const import Const as C
 from clock import Clock  # Класс таймера
 import functions as f  # Вспомогательные функции
 from inform import InformTime
-
 from tunes import Tunes
 
 
