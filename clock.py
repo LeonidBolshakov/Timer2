@@ -23,7 +23,7 @@ class Clock:
             seconds_left (int): Начальное количество секунд для таймера.
         """
         self.seconds_left = seconds_left  # Значение времени таймера
-        self.connections = dict()
+        self.connections: dict[str, Callable] = dict()
         self.tunes = Tunes()
 
         # Создаём и запускаем объект, который будет отсчитывать интервалы времени

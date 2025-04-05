@@ -5,6 +5,7 @@ from typing import Any
 from pathlib import Path
 
 from PyQt6 import uic
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget,
@@ -14,6 +15,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QDialogButtonBox,
     QCheckBox,
+    QMainWindow,
 )
 
 import functions as f
@@ -36,10 +38,12 @@ class Tunes(QWidget):
     lnEdFileMelody: QLineEdit
     toolBtnMelody: QToolButton
 
-    def __init__(self):
+    def __init__(self, timer_2=None):
         super().__init__()
 
-        uic.loadUi("tunes.ui", self)  # Установка данных Qt Designer в объект
+        self.timer_2 = timer_2
+
+        uic.loadUi(C.TUNES_UI, self)  # Установка данных Qt Designer в объект
 
         self.connections()  # Соединение слотов и сигналов
         self.set_validators()  # Установка валидаторов
@@ -49,6 +53,11 @@ class Tunes(QWidget):
             C.TUNE_VOICE_INTERVAL.name_tune: self.lnEdVoiceInterval,
             C.TUNE_BEEP_INTERVAL.name_tune: self.lnEdBeepInterval,
             C.TUNE_BEEP_PERIOD_IN_FINAL.name_tune: self.lnEdBeepPeriodInFinal,
+            C.TUNE_RESTORE_TIME.name_tune: self.checkBoxRestore,
+            C.TUNE_HM_H.name_tune: None,
+            C.TUNE_HM_M.name_tune: None,
+            C.TUNE_MS_M.name_tune: None,
+            C.TUNE_MS_S.name_tune: None,
         }  # Словарь соответствий между именами настроек и отображающими их виджетами
         self.visualization_tunes()  # Отображение первоначального состояния настроек
 
@@ -56,9 +65,12 @@ class Tunes(QWidget):
         """Назначение программ обработки сигналов"""
         self.btnBoxOk.clicked.connect(self.hide)
         self.toolBtnMelody.clicked.connect(self.on_toolBtnMelody)
-        self.connection(self.lnEdVoiceInterval, C.TUNE_VOICE_INTERVAL)
-        self.connection(self.lnEdBeepInterval, C.TUNE_BEEP_INTERVAL)
-        self.connection(self.lnEdBeepPeriodInFinal, C.TUNE_BEEP_PERIOD_IN_FINAL)
+        self.checkBoxRestore.stateChanged.connect(self.on_checkBoxRestore)
+        self.connection_edit_line(self.lnEdVoiceInterval, C.TUNE_VOICE_INTERVAL)
+        self.connection_edit_line(self.lnEdBeepInterval, C.TUNE_BEEP_INTERVAL)
+        self.connection_edit_line(
+            self.lnEdBeepPeriodInFinal, C.TUNE_BEEP_PERIOD_IN_FINAL
+        )
 
     def set_validators(self):
         """Назначение валидаторов полям ввода"""
@@ -79,14 +91,13 @@ class Tunes(QWidget):
                     return tunes_from_file
                 else:
                     QMessageBox.warning(None, C.TITLE_ERROR_READ, C.TEXT_ERROR_READ)
-                    return self.get_default_tunes()
         except FileNotFoundError:
             pass  # Отсутствие файла настроек не ошибка.
         except Exception as e:
             QMessageBox.warning(None, C.TITLE_ERROR_READ, f"{C.TEXT_ERROR_READ}\n{e}")
         return self.get_default_tunes()
 
-    def connection(self, widget: QLineEdit, tune: TuneDescr):
+    def connection_edit_line(self, widget: QLineEdit, tune: TuneDescr):
         """Назначение программы обработки сигнала"""
         widget.editingFinished.connect(lambda: self.editing_finished(tune))
 
@@ -135,10 +146,7 @@ class Tunes(QWidget):
             f.inform_fatal_error(C.TITLE_ERROR_WRITE, f"{C.TEXT_ERROR_WRITE}\n{e}")
 
     def on_toolBtnMelody(self) -> None:
-        """
-        Обработка нажатия кнопки выбора мелодии
-        :return:
-        """
+        """Обработка нажатия кнопки выбора мелодии"""
         # Вызывается диалог выбора файла мелодии.
         # В качестве начальной директории назначаем директорию ранее выбранного файла.
         # Если ранее выбранного файла нет - назначаем рабочую папку программы
@@ -149,6 +157,18 @@ class Tunes(QWidget):
         )
         if file_melody:
             self.editing_finished(C.TUNE_FILE_MELODY, file_melody)
+
+    def on_checkBoxRestore(self, state: int) -> None:
+        """Обработка изменения статуса чекбокса"""
+        match state:
+            case 0:
+                self.put_tune(C.TUNE_RESTORE_TIME, str(Qt.CheckState.Unchecked))
+            case 2:
+                self.put_tune(C.TUNE_RESTORE_TIME, str(Qt.CheckState.Checked))
+            case _:
+                f.inform_fatal_error(
+                    C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE} *'{state}'*"
+                )
 
     def editing_finished(self, tune: TuneDescr, value: str | None = None) -> None:
         """
@@ -162,10 +182,11 @@ class Tunes(QWidget):
         """
         # Записывает настройку в словарь настроек.
         # Если значение настройки не задано параметром, то оно берётся из виджета
-        self.put_tune(tune, value if value else self.display[tune.name_tune].text())
-
-        self.write_tunes()  # Записывает все настройки в файл настроек
-        self.visualization_tune(tune.name_tune)  # Визуализирует введённую настройку
+        if value:
+            self.put_tune(tune, value)
+            self.visualization_tune(tune.name_tune)  # Визуализирует введённую настройку
+        else:
+            self.put_tune(tune, self.display[tune.name_tune].text())
 
     def visualization_tunes(self):
         """Визуализация всех настроек"""
@@ -174,9 +195,23 @@ class Tunes(QWidget):
 
     def visualization_tune(self, name_tune: str) -> None:
         """Визуализация значения настройки"""
-        self.display[name_tune].setText(str(self.dict_tunes[name_tune]))
+        display_tune = self.display[name_tune]
+        value_tune = self.dict_tunes[name_tune]
+        value_type = type(value_tune).__name__
 
-    def put_tune(self, tune: TuneDescr, value: str) -> None:
+        if not display_tune or not value_tune:
+            return
+        match value_type:
+            case "int":
+                display_tune.setText(str(value_tune))
+            case "str" if value_tune.startswith(
+                "CheckState."
+            ):  # Настройка типа CheckState
+                display_tune.setCheckState(f.get_check_state(value_tune))
+            case "str":
+                display_tune.setText(value_tune)
+
+    def put_tune(self, tune: TuneDescr, value: str | int) -> None:
         """
         Запись настройки в словарь настроек
         :param tune: настройка
@@ -197,11 +232,13 @@ class Tunes(QWidget):
                         f"{C.TEXT_TYPE_ERROR} {tune.name_tune} - {current_value}",
                     )
         except ValueError as e:
-            f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE}\n{e}")
+            f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE}\n*'{e}'*")
         except KeyError as e:
             f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_KEY}\n{e}")
         except Exception as e:
             f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_UNKNOWN}\n{e}")
+
+        self.write_tunes()  # Записывает все настройки в файл настроек
 
         return
 
