@@ -88,7 +88,7 @@ class Const:
         "TUNE_BEEP_PERIOD_IN_FINAL", 11
     )  # количество секунд до конца таймера для выдачи beep
     TUNE_FILE_MELODY = TuneDescr(
-        "TUNE_FILE_MELODY", "_internal\default.mp3"
+        "TUNE_FILE_MELODY", "_internal\\default.mp3"
     )  # имя/путь файла с музыкой, завершающей таймер
     TUNE_HM_H = TuneDescr("TUNE_HM_H", 0)
     TUNE_HM_M = TuneDescr("TUNE_HM_M", 0)
