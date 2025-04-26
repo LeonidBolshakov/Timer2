@@ -19,8 +19,9 @@ class Const:
     ACTIVE_FIELD_BG_COLOR = (
         "QLineEdit { background-color: #f5ffb3; }"  # Желтый фон для активных полей
     )
+    CHECK_STATE = "CheckState."
     END_CHECK_INTERVAL = 100  # интервал опроса завершения проигрывания мелодии (мс)
-    FILE_TUNES = "tunes.json"
+    FILE_TUNES_0 = "tunes.json"
     FORMS_HOUR = [
         "часов",
         "час",
@@ -67,7 +68,6 @@ class Const:
     TEXT_NO_MELODY = "Не задана мелодия окончания таймера"
     TEXT_NO_PLAY_MELODY = "Ошибка при инициализации/использования проигрывателя музыки"
     TEXT_NO_TUNES = "Ошибка в программе.\nЗапрошена несуществующая настройка - "
-    TEXT_SELECT_MELODY = "Выбери файл мелодии"
     TEXT_TYPE_ERROR = (
         "Ошибка в программе. Метод Put_tune. Непредусмотренный тип настройки .\n"
     )
@@ -81,6 +81,7 @@ class Const:
     TITLE_ERROR_WRITE = "Ошибка при выводе файла настроек"
     TITLE_INTERNAL_ERROR = "Внутренняя ошибка"
     TITLE_NO_MELODY = "Не задана мелодия"
+    TITLE_SELECT_MELODY = "Выбери файл мелодии"
     TUNE_BEEP_INTERVAL = TuneDescr(
         "TUNE_BEEP_INTERVAL", 3
     )  # Интервал в секундах между сигналами beep в конце работы таймера
@@ -90,13 +91,14 @@ class Const:
     TUNE_FILE_MELODY = TuneDescr(
         "TUNE_FILE_MELODY", "_internal\\default.mp3"
     )  # имя/путь файла с музыкой, завершающей таймер
+    TUNE_FILE_TUNE = TuneDescr("TUNE_FILE_TUNE", FILE_TUNES_0)
     TUNE_HM_H = TuneDescr("TUNE_HM_H", 0)
     TUNE_HM_M = TuneDescr("TUNE_HM_M", 0)
     TUNE_MS_M = TuneDescr("TUNE_MS_M", 0)
     TUNE_MS_S = TuneDescr("TUNE_MS_S", 0)
     TUNE_RESTORE_TIME = TuneDescr(
         "TUNE_RESTORE_TIME", str(Qt.CheckState.Unchecked)
-    )  # Признак - Восстановление времени таймера
+    )  # Признак - Восстановление времени таймера предыдущего сеанса
     TUNE_VOICE_INTERVAL = TuneDescr(
         "TUNE_VOICE_INTERVAL", 10
     )  # Интервал в секундах между голосовыми сообщениями

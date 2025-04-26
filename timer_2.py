@@ -19,7 +19,7 @@ from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import QRegularExpression
 
 from const import Const as C, TuneDescr
-from clock import Clock  # Класс таймера
+from clock import Clock  # Класс работы с таймером
 import functions as f  # Вспомогательные функции
 from inform import InformTime
 from tunes import Tunes

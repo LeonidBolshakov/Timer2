@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QDialogButtonBox,
     QCheckBox,
-    QMainWindow,
 )
 
 import functions as f
@@ -29,6 +28,8 @@ class Tunes(QWidget):
     Класс для работы с настройками программы
     Описание настроек находятся в const.py. Имена описаний начинаются на TUNE_
     """
+
+    dict_tunes: dict[str, Any]
 
     btnBoxOk: QDialogButtonBox
     checkBoxRestore: QCheckBox
@@ -47,9 +48,10 @@ class Tunes(QWidget):
 
         self.connections()  # Соединение слотов и сигналов
         self.set_validators()  # Установка валидаторов
-        self.dict_tunes = self.init_tunes()  # Инициализируем словарь настроек
+        Tunes.dict_tunes = self.init_tunes()  # Инициализируем словарь настроек
         self.display = {
             C.TUNE_FILE_MELODY.name_tune: self.lnEdFileMelody,
+            C.TUNE_FILE_TUNE.name_tune: None,
             C.TUNE_VOICE_INTERVAL.name_tune: self.lnEdVoiceInterval,
             C.TUNE_BEEP_INTERVAL.name_tune: self.lnEdBeepInterval,
             C.TUNE_BEEP_PERIOD_IN_FINAL.name_tune: self.lnEdBeepPeriodInFinal,
@@ -79,13 +81,17 @@ class Tunes(QWidget):
         self.lnEdBeepPeriodInFinal.setValidator(QIntValidator(0, 59, self))
 
     def init_tunes(self) -> dict[str, Any]:
+        tunes_0 = self.read_tunes(C.FILE_TUNES_0)
+        return self.read_tunes(tunes_0["TUNE_FILE_TUNE"])
+
+    def read_tunes(self, file_tunes) -> dict[str, Any]:
         """
         Инициализация словаря настроек.
         Словарь считывается с файла. Если файла нет или его структура испорчена - берутся настройки по умолчанию.
         :return: Словарь настроек
         """
         try:
-            with open(C.FILE_TUNES, "r") as file:
+            with open(file_tunes, "r") as file:
                 tunes_from_file = json.load(file)
                 if self.is_validate(tunes_from_file):
                     return tunes_from_file
@@ -140,7 +146,7 @@ class Tunes(QWidget):
         :return: None
         """
         try:
-            with open(C.FILE_TUNES, "w") as file:
+            with open(C.FILE_TUNES_0, "w") as file:
                 json.dump(self.dict_tunes, file)
         except Exception as e:
             f.inform_fatal_error(C.TITLE_ERROR_WRITE, f"{C.TEXT_ERROR_WRITE}\n{e}")
@@ -148,15 +154,31 @@ class Tunes(QWidget):
     def on_toolBtnMelody(self) -> None:
         """Обработка нажатия кнопки выбора мелодии"""
         # Вызывается диалог выбора файла мелодии.
+        self.identify_file(
+            tune=C.TUNE_FILE_MELODY,
+            title=C.TITLE_SELECT_MELODY,
+            types_file=C.TYPES_FILE_MELODY,
+        )
+
+    def identify_file(self, tune: TuneDescr, title: str, types_file: str) -> None:
+        """
+        Вызов диалога определения имени файла
+        :Params
+            tune: TuneDescr. Настройка с именем файла
+            title: str. Заголовок интерфейса выбора файла
+            types_file: str. Допустимые типы файлов
+        :Return
+            None
+        """
         # В качестве начальной директории назначаем директорию ранее выбранного файла.
         # Если ранее выбранного файла нет - назначаем рабочую папку программы
-        directory = Path(self.get_tune(C.TUNE_FILE_MELODY)).parent
+        directory = Path(self.get_tune(tune)).parent
         directory_str = str(directory) if directory else None
         file_melody, _ = QFileDialog.getOpenFileName(
-            self, C.TEXT_SELECT_MELODY, directory_str, C.TYPES_FILE_MELODY
+            self, title, directory_str, types_file
         )
         if file_melody:
-            self.editing_finished(C.TUNE_FILE_MELODY, file_melody)
+            self.editing_finished(tune, file_melody)
 
     def on_checkBoxRestore(self, state: int) -> None:
         """Обработка изменения статуса чекбокса"""
@@ -177,7 +199,7 @@ class Tunes(QWidget):
                         По умолчанию предполагается, что значение настройки вводится и отображается в одном виджете.
                         Соответствие имён настроек и виджетов для их отображения задаётся словарём self.display.
         :param value:   (Опционально). Значение настройки.
-                        Параметр задаётся если значение настройки берётся не из виджета, а получается иным путём.
+                        Параметр определяет, что значение настройки берётся не из виджета, а задаётся параметром.
         :return: None
         """
         # Записывает настройку в словарь настроек.
@@ -197,18 +219,20 @@ class Tunes(QWidget):
         """Визуализация значения настройки"""
         display_tune = self.display[name_tune]
         value_tune = self.dict_tunes[name_tune]
-        value_type = type(value_tune).__name__
 
         if not display_tune or not value_tune:
             return
-        match value_type:
-            case "int":
+
+        match value_tune:
+            case int():
                 display_tune.setText(str(value_tune))
-            case "str" if value_tune.startswith(
-                "CheckState."
+
+            case str() if value_tune.startswith(
+                C.CHECK_STATE
             ):  # Настройка типа CheckState
                 display_tune.setCheckState(f.get_check_state(value_tune))
-            case "str":
+
+            case str():
                 display_tune.setText(value_tune)
 
     def put_tune(self, tune: TuneDescr, value: str | int) -> None:
