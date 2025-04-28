@@ -29,7 +29,7 @@ class Tunes(QWidget):
     Описание настроек находятся в const.py. Имена описаний начинаются на TUNE_
     """
 
-    dict_tunes: dict[str, Any]
+    dict_tunes: dict[str, Any] = dict()
 
     btnBoxOk: QDialogButtonBox
     checkBoxRestore: QCheckBox
@@ -45,6 +45,7 @@ class Tunes(QWidget):
         self.timer_2 = timer_2
 
         uic.loadUi(C.TUNES_UI, self)  # Установка данных Qt Designer в объект
+        self.path_file_tunes = ""
 
         self.connections()  # Соединение слотов и сигналов
         self.set_validators()  # Установка валидаторов
@@ -81,17 +82,27 @@ class Tunes(QWidget):
         self.lnEdBeepPeriodInFinal.setValidator(QIntValidator(0, 59, self))
 
     def init_tunes(self) -> dict[str, Any]:
-        tunes_0 = self.read_tunes(C.FILE_TUNES_0)
-        return self.read_tunes(tunes_0["TUNE_FILE_TUNE"])
+        self.change_file_tunes(C.FILE_TUNES_0)
+        path_file_tunes = self.get_tune(C.TUNE_FILE_TUNE)
+        return self.change_file_tunes(path_file_tunes)
 
-    def read_tunes(self, file_tunes) -> dict[str, Any]:
+    def change_file_tunes(self, new_path_file: str) -> dict[str, Any]:
+        """
+        Замена файла настроек
+        :param: (str) - Путь на новый файл настроек
+        :return: (dict[str, Any]) - Словарь настроек
+        """
+        self.path_file_tunes = new_path_file
+        return self.read_tunes()
+
+    def read_tunes(self) -> dict[str, Any]:
         """
         Инициализация словаря настроек.
         Словарь считывается с файла. Если файла нет или его структура испорчена - берутся настройки по умолчанию.
         :return: Словарь настроек
         """
         try:
-            with open(file_tunes, "r") as file:
+            with open(self.path_file_tunes, "r") as file:
                 tunes_from_file = json.load(file)
                 if self.is_validate(tunes_from_file):
                     return tunes_from_file
@@ -146,7 +157,7 @@ class Tunes(QWidget):
         :return: None
         """
         try:
-            with open(C.FILE_TUNES_0, "w") as file:
+            with open(self.path_file_tunes, "w") as file:
                 json.dump(self.dict_tunes, file)
         except Exception as e:
             f.inform_fatal_error(C.TITLE_ERROR_WRITE, f"{C.TEXT_ERROR_WRITE}\n{e}")
@@ -266,16 +277,17 @@ class Tunes(QWidget):
 
         return
 
-    def get_tune(self, tune: TuneDescr) -> Any:
+    @staticmethod
+    def get_tune(tune: TuneDescr) -> Any:
         """
         Получить значение настройки
         :param tune: Настройка
         :return: Значение настройки
         """
         try:
-            value = self.dict_tunes[tune.name_tune]
+            value = Tunes.dict_tunes[tune.name_tune]
             return value
         except KeyError:
             f.inform_fatal_error(
-                C.TITLE_INTERNAL_ERROR, "{C.TEXT_NO_TUNES} {tune.name_tune}"
+                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_TUNES} {tune.name_tune}"
             )
