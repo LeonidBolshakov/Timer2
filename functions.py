@@ -1,4 +1,6 @@
 import sys
+import tempfile
+from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QLineEdit,
@@ -179,3 +181,20 @@ def check_music_finished() -> None:
     if not pygame.mixer.music.get_busy():
         # noinspection PyUnresolvedReferences
         signals.melody_finished.emit()
+
+
+def is_valid_filename(filename: str) -> bool:
+    """
+    Проверяем валидность имени файла
+    :param: (str) - Строка с именем файла
+    :return: (bool) - True, если имя валидное, False - если не валидное
+    """
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            test_path = Path(tmp_dir, filename)
+            with open(test_path, "w"):
+                pass
+            Path(test_path).unlink()
+        return True
+    except (OSError, IOError):
+        return False

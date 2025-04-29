@@ -62,7 +62,7 @@ class Timer2(QMainWindow):
 
         self.clock: Clock | None = None  # Объект Clock
         self.inform_tune = InformTime()
-        self.tunes = Tunes(self)  # объект настроек
+        self.tunes = Tunes()  # объект настроек
         self.tunes_window: Tunes | None = None
 
         # Создание и назначение валидаторов для ввода времени

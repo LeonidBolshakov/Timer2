@@ -36,23 +36,23 @@ class Tunes(QWidget):
     lnEdVoiceInterval: QLineEdit
     lnEdBeepInterval: QLineEdit
     lnEdBeepPeriodInFinal: QLineEdit
+    lnEdFileTunes: QLineEdit
     lnEdFileMelody: QLineEdit
+    toolBtnFileTunes: QToolButton
     toolBtnMelody: QToolButton
 
-    def __init__(self, timer_2=None):
+    def __init__(self):
         super().__init__()
 
-        self.timer_2 = timer_2
-
         uic.loadUi(C.TUNES_UI, self)  # Установка данных Qt Designer в объект
-        self.path_file_tunes = ""
+        self.path_file_tunes = ""  # Путь на файл с настройками. Может изменяться.
 
         self.connections()  # Соединение слотов и сигналов
         self.set_validators()  # Установка валидаторов
         Tunes.dict_tunes = self.init_tunes()  # Инициализируем словарь настроек
         self.display = {
             C.TUNE_FILE_MELODY.name_tune: self.lnEdFileMelody,
-            C.TUNE_FILE_TUNE.name_tune: None,
+            C.TUNE_FILE_TUNE.name_tune: self.lnEdFileTunes,
             C.TUNE_VOICE_INTERVAL.name_tune: self.lnEdVoiceInterval,
             C.TUNE_BEEP_INTERVAL.name_tune: self.lnEdBeepInterval,
             C.TUNE_BEEP_PERIOD_IN_FINAL.name_tune: self.lnEdBeepPeriodInFinal,
@@ -67,10 +67,13 @@ class Tunes(QWidget):
     def connections(self):
         """Назначение программ обработки сигналов"""
         self.btnBoxOk.clicked.connect(self.hide)
+        self.toolBtnFileTunes.clicked.connect(self.on_toolBtnFileTunes)
         self.toolBtnMelody.clicked.connect(self.on_toolBtnMelody)
         self.checkBoxRestore.stateChanged.connect(self.on_checkBoxRestore)
+        self.lnEdFileTunes.editingFinished.connect(self.on_lnEdFileTunes)
         self.connection_edit_line(self.lnEdVoiceInterval, C.TUNE_VOICE_INTERVAL)
         self.connection_edit_line(self.lnEdBeepInterval, C.TUNE_BEEP_INTERVAL)
+        self.connection_edit_line(self.lnEdFileTunes, C.TUNE_FILE_TUNE)
         self.connection_edit_line(
             self.lnEdBeepPeriodInFinal, C.TUNE_BEEP_PERIOD_IN_FINAL
         )
@@ -82,11 +85,11 @@ class Tunes(QWidget):
         self.lnEdBeepPeriodInFinal.setValidator(QIntValidator(0, 59, self))
 
     def init_tunes(self) -> dict[str, Any]:
-        self.change_file_tunes(C.FILE_TUNES_0)
-        path_file_tunes = self.get_tune(C.TUNE_FILE_TUNE)
-        return self.change_file_tunes(path_file_tunes)
+        Tunes.dict_tunes = self.read_new_file_tunes(C.FILE_TUNES_0)
+        new_path_file_tunes = self.get_tune(C.TUNE_FILE_TUNE)
+        return self.read_new_file_tunes(new_path_file_tunes)
 
-    def change_file_tunes(self, new_path_file: str) -> dict[str, Any]:
+    def read_new_file_tunes(self, new_path_file: str) -> dict[str, Any]:
         """
         Замена файла настроек
         :param: (str) - Путь на новый файл настроек
@@ -116,7 +119,7 @@ class Tunes(QWidget):
 
     def connection_edit_line(self, widget: QLineEdit, tune: TuneDescr):
         """Назначение программы обработки сигнала"""
-        widget.editingFinished.connect(lambda: self.editing_finished(tune))
+        widget.editingFinished.connect(lambda: self.finish_editing(tune))
 
     @staticmethod
     def is_validate(tunes: object) -> bool:
@@ -165,13 +168,40 @@ class Tunes(QWidget):
     def on_toolBtnMelody(self) -> None:
         """Обработка нажатия кнопки выбора мелодии"""
         # Вызывается диалог выбора файла мелодии.
-        self.identify_file(
+        file_path = self.get_file_path(
             tune=C.TUNE_FILE_MELODY,
             title=C.TITLE_SELECT_MELODY,
             types_file=C.TYPES_FILE_MELODY,
         )
+        if file_path:
+            self.finish_editing(C.TUNE_FILE_MELODY, file_path)
 
-    def identify_file(self, tune: TuneDescr, title: str, types_file: str) -> None:
+    def on_toolBtnFileTunes(self) -> None:
+        """Обработка нажатия кнопки задания файла настроек"""
+        # Вызывается диалог задания файла настроек.
+        new_path_file_tunes = self.get_file_path(
+            tune=C.TUNE_FILE_TUNE,
+            title=C.TITLE_SELECT_FILE_TUNE,
+            types_file=C.TYPES_FILE_TUNES,
+        )
+        # Устанавливаем новый файл настроек
+        if new_path_file_tunes:
+            self.set_new_tunes(new_path_file_tunes)
+
+    def set_new_tunes(self, new_path_file_tunes: str):
+        """
+        Устанавливаем новый файл настроек
+        :param: (str) Путь на новый файл настроек
+        """
+        Tunes.dict_tunes = self.read_new_file_tunes(C.FILE_TUNES_0)
+        self.finish_editing(C.TUNE_FILE_TUNE, new_path_file_tunes)
+
+        Tunes.dict_tunes = self.read_new_file_tunes(new_path_file_tunes)
+        self.finish_editing(C.TUNE_FILE_TUNE, new_path_file_tunes)
+
+        self.visualization_tunes()
+
+    def get_file_path(self, tune: TuneDescr, title: str, types_file: str) -> str:
         """
         Вызов диалога определения имени файла
         :Params
@@ -179,17 +209,16 @@ class Tunes(QWidget):
             title: str. Заголовок интерфейса выбора файла
             types_file: str. Допустимые типы файлов
         :Return
-            None
+            str - путь на файл
         """
         # В качестве начальной директории назначаем директорию ранее выбранного файла.
         # Если ранее выбранного файла нет - назначаем рабочую папку программы
         directory = Path(self.get_tune(tune)).parent
         directory_str = str(directory) if directory else None
-        file_melody, _ = QFileDialog.getOpenFileName(
-            self, title, directory_str, types_file
+        file_path, _ = QFileDialog.getOpenFileName(
+            None, title, directory_str, types_file
         )
-        if file_melody:
-            self.editing_finished(tune, file_melody)
+        return file_path
 
     def on_checkBoxRestore(self, state: int) -> None:
         """Обработка изменения статуса чекбокса"""
@@ -203,7 +232,7 @@ class Tunes(QWidget):
                     C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE} *'{state}'*"
                 )
 
-    def editing_finished(self, tune: TuneDescr, value: str | None = None) -> None:
+    def finish_editing(self, tune: TuneDescr, value: str | None = None) -> None:
         """
         Завершает ввод настройки: сохраняет и визуализирует значение настройки.
         :param tune:    Введённая настройка.
@@ -291,3 +320,26 @@ class Tunes(QWidget):
             f.inform_fatal_error(
                 C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_TUNES} {tune.name_tune}"
             )
+
+    def on_lnEdFileTunes(self) -> None:
+        """
+        Устанавливаем файл настроек, имя которого введено вручную.
+        """
+        # Проверяем и, при необходимости устанавливаем расширение файла
+        new_file_name = self.lnEdFileTunes.text()
+        if Path(new_file_name).suffix != f".{C.JSON}":
+            new_file_name += f".{C.JSON}"
+
+        # Проверяем валидность введённого имени файла
+        if not f.is_valid_filename(new_file_name):
+            QMessageBox.warning(
+                None,
+                C.TITLE_SELECT_FILE_TUNE,
+                f"{C.TEXT_ERROR_FILE_NAME} {new_file_name}",
+            )
+            old_file_name = self.get_tune(C.TUNE_FILE_TUNE)
+            self.lnEdFileTunes.setText(old_file_name)
+            return
+
+        # Устанавливаем новый файл настроек
+        self.set_new_tunes(new_file_name)

@@ -42,6 +42,7 @@ class Const:
     INACTIVE_FIELD_BG_COLOR = (
         "QLineEdit { background-color: white; }"  # Белый фон для неактивных полей
     )
+    JSON = "json"
     LANG_RU = "ru"  # Обозначение русского языка
     RE_PATTERN_0_24 = (
         r"[0-9]|1[0-9]|2[0-3]"  # Шаблон для часа суток. Пустое поле допустимо.
@@ -63,6 +64,7 @@ class Const:
     TEXT_ERROR_UNKNOWN = "Не известная ошибка"
     TEXT_ERROR_VALUE = "Неправильное значение ключа"
     TEXT_ERROR_WRITE = "Настройки программы не сохранены.\n"
+    TEXT_ERROR_FILE_NAME = "Задано некорректное имя файла"
     TEXT_INTERNAL_ERROR = "Внутренняя ошибка: Экземпляр приложения не существует!"
     TEXT_NO_INIT_SPEECH = "Не удалось инициировать синтезатор речи"
     TEXT_NO_MELODY = "Не задана мелодия окончания таймера"
@@ -81,6 +83,7 @@ class Const:
     TITLE_ERROR_WRITE = "Ошибка при выводе файла настроек"
     TITLE_INTERNAL_ERROR = "Внутренняя ошибка"
     TITLE_NO_MELODY = "Не задана мелодия"
+    TITLE_SELECT_FILE_TUNE = "Выбери файл настроек"
     TITLE_SELECT_MELODY = "Выбери файл мелодии"
     TUNE_BEEP_INTERVAL = TuneDescr(
         "TUNE_BEEP_INTERVAL", 3
@@ -104,3 +107,4 @@ class Const:
     )  # Интервал в секундах между голосовыми сообщениями
     TUNES_UI = "_internal/tunes.ui"  # имя/путь UI файла настроек
     TYPES_FILE_MELODY = "*.mp3"
+    TYPES_FILE_TUNES = f"JSON файлы (*.{JSON})"
