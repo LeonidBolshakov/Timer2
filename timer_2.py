@@ -164,20 +164,23 @@ class Timer2(QMainWindow):
             self.lineEdit_MS_M.setText(value_tune(C.TUNE_MS_M))
             self.lineEdit_MS_S.setText(value_tune(C.TUNE_MS_S))
 
+    # noinspection PyUnresolvedReferences
     def on_btnStart_click(self) -> None:
         """
         Обработчик нажатия кнопки "Старт".
         Создает объект Clock и запускает таймер.
         """
         # Создание и настройка таймера
-        if self.clock is None and self.get_seconds_left():
-            self.clock = Clock(self.get_seconds_left())
-            self.clock.connect("draw_time", self.draw_time)
-            self.clock.connect("inform_voice", self.inform_tune.inform_voice)
-            self.clock.connect("inform_done", self.inform_tune.inform_done)
-            self.clock.start()  # Старт таймера
-            self.btnStart.setDisabled(True)  # Кнопка больше НЕ нужна
-            f.beep()
+        if not self.clock is None or self.get_seconds_left():
+            return
+
+        self.clock = Clock(self.get_seconds_left())
+        self.clock.connect("draw_time", self.draw_time)
+        self.clock.connect("inform_voice", self.inform_tune.inform_voice)
+        self.clock.connect("inform_done", self.inform_tune.inform_done)
+        self.clock.start()  # Старт таймера
+        self.btnStart.setDisabled(True)  # Кнопка больше НЕ нужна
+        f.beep()
 
     def on_btnTunes_click(self) -> None:
         """
@@ -187,6 +190,7 @@ class Timer2(QMainWindow):
             self.tunes_window is None
         ):  # Защита от создания многих окон при повторном нажатии кнопки.
             self.tunes_window = Tunes()
+        # noinspection PyUnresolvedReferences
         self.tunes_window.show()
 
     def draw_time(self, seconds_left: int) -> None:
@@ -258,7 +262,7 @@ class Timer2(QMainWindow):
             case self.lineEdit_MS_M | self.lineEdit_MS_S:
                 return TimeField.MS
             case _:
-                f.inform_fatal_error(
+                f.inform_fatal_error_and_quit(
                     C.TITLE_INTERNAL_ERROR,
                     f"{C.TEXT_ERROR_PARAM}\n{widget.objectName()=}",
                 )
@@ -309,7 +313,9 @@ class Timer2(QMainWindow):
                 self.lineEdit_HM_H.setText("")
                 self.lineEdit_HM_M.setText("")
             case _:
-                f.inform_fatal_error(C.TITLE_INTERNAL_ERROR, C.TEXT_ERROR_UNKNOWN)
+                f.inform_fatal_error_and_quit(
+                    C.TITLE_INTERNAL_ERROR, C.TEXT_ERROR_UNKNOWN
+                )
 
         self.sets_tunes_and_finishes(widget, focus)
 

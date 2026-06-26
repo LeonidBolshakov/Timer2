@@ -54,6 +54,9 @@ class Const:
     SECONDS_IN_MINUTE = 60  # Секунд в минуте
     TEXT_ERROR_CALLBACK = "Класс Clock. Неверно указана функция callback - "
     TEXT_ERROR_KEY = "Не зарегистрированное имя настройки"
+    TEXT_ERROR_NAME_CALLBACK = (
+        "Класс Clock. Функция callback регистрируется повторно - "
+    )
     TEXT_ERROR_PARAM = (
         "методу timer_2.active_time_field передан непредусмотренный параметр widget."
     )
@@ -62,7 +65,7 @@ class Const:
         + "Работаем с настройками по умолчанию"
     )
     TEXT_ERROR_UNKNOWN = "Не известная ошибка"
-    TEXT_ERROR_VALUE = "Неправильное значение ключа"
+    TEXT_ERROR_VALUE = "Неправильное значение настройки"
     TEXT_ERROR_WRITE = "Настройки программы не сохранены.\n"
     TEXT_ERROR_FILE_NAME = "Задано некорректное имя файла"
     TEXT_INTERNAL_ERROR = "Внутренняя ошибка: Экземпляр приложения не существует!"
@@ -71,15 +74,15 @@ class Const:
     TEXT_NO_PLAY_MELODY = "Ошибка при инициализации/использования проигрывателя музыки"
     TEXT_NO_TUNES = "Ошибка в программе.\nЗапрошена несуществующая настройка - "
     TEXT_TYPE_ERROR = (
-        "Ошибка в программе. Метод Put_tune. Непредусмотренный тип настройки .\n"
+        "Ошибка в программе. Метод Put_tune. Непредусмотренный тип настройки.\n"
     )
-    TIMER_2_UI = "_internal/timer_2.ui"  # имя/путь UI файла главного окна
+    TIMER_2_UI = "_internal/timer_2.ui"  # путь/имя UI файла главного окна
     TIMER_INTERVAL = (
         1000  # Интервал таймера - 1 секунда (1000 миллисекунд). Менять нельзя
     )
     TITLE_ERROR_READ = "Ошибка при вводе файла настроек"
     TITLE_ERROR_SPEACH = "Инициализация синтезатора речи"
-    TITLE_ERROR_TUNE = "Ошибка при сохранении настройки"
+    TITLE_ERROR_TUNE = "Ошибка настройки"
     TITLE_ERROR_WRITE = "Ошибка при выводе файла настроек"
     TITLE_INTERNAL_ERROR = "Внутренняя ошибка"
     TITLE_NO_MELODY = "Не задана мелодия"
@@ -100,7 +103,7 @@ class Const:
     TUNE_MS_M = TuneDescr("TUNE_MS_M", 0)
     TUNE_MS_S = TuneDescr("TUNE_MS_S", 0)
     TUNE_RESTORE_TIME = TuneDescr(
-        "TUNE_RESTORE_TIME", str(Qt.CheckState.Unchecked)
+        "TUNE_RESTORE_TIME", Qt.CheckState.Unchecked
     )  # Признак - Восстановление времени таймера предыдущего сеанса
     TUNE_VOICE_INTERVAL = TuneDescr(
         "TUNE_VOICE_INTERVAL", 10

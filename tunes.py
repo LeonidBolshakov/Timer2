@@ -80,16 +80,16 @@ class Tunes(QWidget):
 
     def set_validators(self):
         """Назначение валидаторов полям ввода"""
-        self.lnEdVoiceInterval.setValidator(QIntValidator(0, 59, self))
-        self.lnEdBeepInterval.setValidator(QIntValidator(0, 59, self))
-        self.lnEdBeepPeriodInFinal.setValidator(QIntValidator(0, 59, self))
+        self.lnEdVoiceInterval.setValidator(QIntValidator(1, 59, self))
+        self.lnEdBeepInterval.setValidator(QIntValidator(1, 59, self))
+        self.lnEdBeepPeriodInFinal.setValidator(QIntValidator(1, 59, self))
 
     def init_tunes(self) -> dict[str, Any]:
-        Tunes.dict_tunes = self.read_new_file_tunes(C.FILE_TUNES_0)
+        Tunes.dict_tunes = self.read_file_tunes(C.FILE_TUNES_0)
         new_path_file_tunes = self.get_tune(C.TUNE_FILE_TUNE)
-        return self.read_new_file_tunes(new_path_file_tunes)
+        return self.read_file_tunes(new_path_file_tunes)
 
-    def read_new_file_tunes(self, new_path_file: str) -> dict[str, Any]:
+    def read_file_tunes(self, new_path_file: str) -> dict[str, Any]:
         """
         Замена файла настроек
         :param: (str) - Путь на новый файл настроек
@@ -107,15 +107,18 @@ class Tunes(QWidget):
         try:
             with open(self.path_file_tunes, "r") as file:
                 tunes_from_file = json.load(file)
-                if self.is_validate(tunes_from_file):
-                    return tunes_from_file
-                else:
-                    QMessageBox.warning(None, C.TITLE_ERROR_READ, C.TEXT_ERROR_READ)
         except FileNotFoundError:
+            tunes_from_file=self.read_file_tunes(C.FILE_TUNES_0)
             pass  # Отсутствие файла настроек не ошибка.
         except Exception as e:
             QMessageBox.warning(None, C.TITLE_ERROR_READ, f"{C.TEXT_ERROR_READ}\n{e}")
-        return self.get_default_tunes()
+            return self.get_default_tunes()
+
+        if self.is_validate(tunes_from_file):
+            self.deserialize(tunes_from_file)
+        else:
+            QMessageBox.warning(None, C.TITLE_ERROR_READ, C.TEXT_ERROR_READ)
+        return tunes_from_file
 
     def connection_edit_line(self, widget: QLineEdit, tune: TuneDescr):
         """Назначение программы обработки сигнала"""
@@ -135,6 +138,22 @@ class Tunes(QWidget):
             if not isinstance(key, str):
                 return False
         return True
+
+    @staticmethod
+    def serialize(tunes: dict[str, Any]):
+        for tune_name, tune_value in tunes.items():
+            if tune_value == Qt.CheckState.Unchecked:
+                tunes[tune_name] = "CheckState.Unchecked"
+            elif tune_value == Qt.CheckState.Checked:
+                tunes[tune_name] = "CheckState.Checked"
+
+    @staticmethod
+    def deserialize(tunes: dict[str, Any]) -> None:
+        for tune_name, tune_value in tunes.items():
+            if tune_value == "CheckState.Unchecked":
+                tunes[tune_name] = Qt.CheckState.Unchecked
+            elif tune_value == "CheckState.Checked":
+                tunes[tune_name] = Qt.CheckState.Checked
 
     @staticmethod
     def get_default_tunes() -> dict[str, Any]:
@@ -159,11 +178,17 @@ class Tunes(QWidget):
         Запись словаря настроек в файл настроек
         :return: None
         """
+        self.serialize(self.dict_tunes)
+        if not self.is_validate(self.dict_tunes):
+            f.inform_fatal_error_and_quit(C.TITLE_ERROR_WRITE, C.TEXT_ERROR_UNKNOWN)
+
         try:
             with open(self.path_file_tunes, "w") as file:
                 json.dump(self.dict_tunes, file)
         except Exception as e:
-            f.inform_fatal_error(C.TITLE_ERROR_WRITE, f"{C.TEXT_ERROR_WRITE}\n{e}")
+            f.inform_fatal_error_and_quit(
+                C.TITLE_ERROR_WRITE, f"{C.TEXT_ERROR_WRITE}\n{e}"
+            )
 
     def on_toolBtnMelody(self) -> None:
         """Обработка нажатия кнопки выбора мелодии"""
@@ -193,12 +218,8 @@ class Tunes(QWidget):
         Устанавливаем новый файл настроек
         :param: (str) Путь на новый файл настроек
         """
-        Tunes.dict_tunes = self.read_new_file_tunes(C.FILE_TUNES_0)
+        Tunes.dict_tunes = self.read_file_tunes(new_path_file_tunes)
         self.finish_editing(C.TUNE_FILE_TUNE, new_path_file_tunes)
-
-        Tunes.dict_tunes = self.read_new_file_tunes(new_path_file_tunes)
-        self.finish_editing(C.TUNE_FILE_TUNE, new_path_file_tunes)
-
         self.visualization_tunes()
 
     def get_file_path(self, tune: TuneDescr, title: str, types_file: str) -> str:
@@ -223,12 +244,12 @@ class Tunes(QWidget):
     def on_checkBoxRestore(self, state: int) -> None:
         """Обработка изменения статуса чекбокса"""
         match state:
-            case 0:
-                self.put_tune(C.TUNE_RESTORE_TIME, str(Qt.CheckState.Unchecked))
-            case 2:
-                self.put_tune(C.TUNE_RESTORE_TIME, str(Qt.CheckState.Checked))
+            case Qt.CheckState.Unchecked.value:
+                self.put_tune(C.TUNE_RESTORE_TIME, Qt.CheckState.Unchecked)
+            case Qt.CheckState.Checked.value:
+                self.put_tune(C.TUNE_RESTORE_TIME, Qt.CheckState.Checked)
             case _:
-                f.inform_fatal_error(
+                f.inform_fatal_error_and_quit(
                     C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE} *'{state}'*"
                 )
 
@@ -248,7 +269,9 @@ class Tunes(QWidget):
             self.put_tune(tune, value)
             self.visualization_tune(tune.name_tune)  # Визуализирует введённую настройку
         else:
-            self.put_tune(tune, self.display[tune.name_tune].text())
+            widget = self.display[tune.name_tune]
+            if widget is not None:
+                self.put_tune(tune, widget.text())
 
     def visualization_tunes(self):
         """Визуализация всех настроек"""
@@ -258,24 +281,23 @@ class Tunes(QWidget):
     def visualization_tune(self, name_tune: str) -> None:
         """Визуализация значения настройки"""
         display_tune = self.display[name_tune]
-        value_tune = self.dict_tunes[name_tune]
+        tune_value = self.dict_tunes[name_tune]
 
-        if not display_tune or not value_tune:
+        if not display_tune or not tune_value:
             return
 
-        match value_tune:
+        match tune_value:
             case int():
-                display_tune.setText(str(value_tune))
+                display_tune.setText(str(tune_value))
 
-            case str() if value_tune.startswith(
-                C.CHECK_STATE
-            ):  # Настройка типа CheckState
-                display_tune.setCheckState(f.get_check_state(value_tune))
+            case Qt.CheckState.Checked:
+                # noinspection PyUnresolvedReferences
+                display_tune.setCheckState(tune_value)
 
             case str():
-                display_tune.setText(value_tune)
+                display_tune.setText(tune_value)
 
-    def put_tune(self, tune: TuneDescr, value: str | int) -> None:
+    def put_tune(self, tune: TuneDescr, value: str | int | Qt.CheckState) -> None:
         """
         Запись настройки в словарь настроек
         :param tune: настройка
@@ -283,24 +305,28 @@ class Tunes(QWidget):
         :return: None
         """
         # Тип настройки должен быть такой же, как тип настройки по умолчанию.
+        if not (
+            type(tune.default) in (int, str) or isinstance(tune.default, Qt.CheckState)
+        ):
+            current_value = self.dict_tunes[tune.name_tune]
+            f.inform_fatal_error_and_quit(
+                f"{C.TITLE_INTERNAL_ERROR}",
+                f"{C.TEXT_TYPE_ERROR} {tune.name_tune} - {current_value}",
+            )
         try:
-            match type(tune.default).__name__:
-                case "int":
-                    self.dict_tunes[tune.name_tune] = int(value)
-                case "str":
-                    self.dict_tunes[tune.name_tune] = value
-                case _:
-                    current_value = self.dict_tunes[tune.name_tune]
-                    f.inform_fatal_error(
-                        f"{C.TITLE_INTERNAL_ERROR}",
-                        f"{C.TEXT_TYPE_ERROR} {tune.name_tune} - {current_value}",
-                    )
+            self.dict_tunes[tune.name_tune] = value
         except ValueError as e:
-            f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE}\n*'{e}'*")
+            f.inform_fatal_error_and_quit(
+                C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_VALUE}\n*'{e}'*"
+            )
         except KeyError as e:
-            f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_KEY}\n{e}")
+            f.inform_fatal_error_and_quit(
+                C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_KEY}\n{e}"
+            )
         except Exception as e:
-            f.inform_fatal_error(C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_UNKNOWN}\n{e}")
+            f.inform_fatal_error_and_quit(
+                C.TITLE_ERROR_TUNE, f"{C.TEXT_ERROR_UNKNOWN}\n{e}"
+            )
 
         self.write_tunes()  # Записывает все настройки в файл настроек
 
@@ -314,10 +340,9 @@ class Tunes(QWidget):
         :return: Значение настройки
         """
         try:
-            value = Tunes.dict_tunes[tune.name_tune]
-            return value
+            return Tunes.dict_tunes[tune.name_tune]
         except KeyError:
-            f.inform_fatal_error(
+            f.inform_fatal_error_and_quit(
                 C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_TUNES} {tune.name_tune}"
             )
 
@@ -329,7 +354,6 @@ class Tunes(QWidget):
         new_file_name = self.lnEdFileTunes.text()
         if Path(new_file_name).suffix != f".{C.JSON}":
             new_file_name += f".{C.JSON}"
-
         # Проверяем валидность введённого имени файла
         if not f.is_valid_filename(new_file_name):
             QMessageBox.warning(
@@ -337,9 +361,8 @@ class Tunes(QWidget):
                 C.TITLE_SELECT_FILE_TUNE,
                 f"{C.TEXT_ERROR_FILE_NAME} {new_file_name}",
             )
-            old_file_name = self.get_tune(C.TUNE_FILE_TUNE)
-            self.lnEdFileTunes.setText(old_file_name)
+            default_file_name = self.get_tune(C.TUNE_FILE_TUNE)
+            self.lnEdFileTunes.setText(default_file_name)
             return
-
         # Устанавливаем новый файл настроек
         self.set_new_tunes(new_file_name)

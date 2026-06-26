@@ -75,6 +75,10 @@ class Clock:
             name_callback (str): - имя функции, используется в методе callback
             func (Callable): - ссылка на регистрируемую функцию
         """
+        if name_callback in self.connections:
+            f.inform_fatal_error_and_quit(
+                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_ERROR_NAME_CALLBACK} {name_callback}"
+            )
         self.connections[name_callback] = func
 
     def callback(self, func_name: str, param: int | None = None) -> None:
@@ -90,10 +94,10 @@ class Clock:
             else:
                 self.connections[func_name](param)
         except Exception as e:
-            f.inform_fatal_error(
+            f.inform_fatal_error_and_quit(
                 C.TITLE_INTERNAL_ERROR, f"{C.TEXT_ERROR_CALLBACK} {func_name} \n{e}"
             )
 
     def start(self):
-        """Старт точного таймера"""
+        """Старт отсчёта точного таймера"""
         self.timer.start()

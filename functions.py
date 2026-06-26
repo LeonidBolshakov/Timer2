@@ -1,19 +1,20 @@
 import sys
 import tempfile
 from pathlib import Path
+import os
 
 from PyQt6.QtWidgets import (
     QLineEdit,
     QApplication,
     QMessageBox,
 )
-from PyQt6.QtCore import Qt
 from num2words import num2words  # type: ignore # Библиотека для преобразования чисел в текст
 import pygame
 
 from const import Const as c
 from signals import signals
-from const import Const as C
+
+PROGRAM_NAME = "Timer_2"
 
 
 def num(line_edit: QLineEdit) -> int:
@@ -151,7 +152,7 @@ def beep() -> None:
     QApplication.beep()  # Используем стандартный метод для воспроизведения системного сигнала
 
 
-def inform_fatal_error(title: str, text: str) -> None:
+def inform_fatal_error_and_quit(title: str, text: str) -> None:
     """
     Действия при фатальной ошибке
     :param title: заголовок сообщения об ошибке
@@ -160,20 +161,6 @@ def inform_fatal_error(title: str, text: str) -> None:
     """
     QMessageBox.warning(None, title, text)
     go_quit()
-
-
-def get_check_state(check_state: str) -> Qt.CheckState | None:
-    match check_state:
-        case "CheckState.Unchecked":
-            return Qt.CheckState.Unchecked
-        case "CheckState.Checked":
-            return Qt.CheckState.Checked
-        case _:
-            inform_fatal_error(
-                C.TITLE_ERROR_TUNE,
-                f"to_check_state {C.TEXT_ERROR_VALUE} - {check_state}",
-            )
-    return None
 
 
 def check_music_finished() -> None:
@@ -198,3 +185,15 @@ def is_valid_filename(filename: str) -> bool:
         return True
     except (OSError, IOError):
         return False
+
+
+def get_file_path() -> Path:
+    """
+    Каталог для хранения пути файла настроек программы между запусками.
+    """
+    base_dir = Path(os.getenv("APPDATA", Path.home()))
+    settings_dir = base_dir / PROGRAM_NAME
+
+    settings_dir.mkdir(parents=True, exist_ok=True)
+
+    return settings_dir
