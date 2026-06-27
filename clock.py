@@ -1,103 +1,63 @@
-from typing import Callable
+from collections.abc import Callable
+
 from precise_timer import PreciseTimer
-from tunes import Tunes
 from const import Const as C
 import functions as f
+from tunes import TunesSettings
 
 
 class Clock:
-    """
-    Этот класс управляет отсчётом времени, отправляет уведомления и
-    выполняет действия при завершении времени.
+    """Управляет отсчётом времени и событиями таймера."""
 
-    Атрибуты:
-        draw_time (callable): Функция для обновления отображения оставшегося времени.
-                        Функция должна быть задана вызывающей программой
-    """
-
-    def __init__(self, seconds_left: int):
-        """
-        Инициализация таймера.
-
-        Args:
-            seconds_left (int): Начальное количество секунд для таймера.
-        """
-        self.seconds_left = seconds_left  # Значение времени таймера
-        self.connections: dict[str, Callable] = dict()
-        self.tunes = Tunes()
-
-        # Создаём и запускаем объект, который будет отсчитывать интервалы времени
+    def __init__(self, seconds_left: int, settings: TunesSettings) -> None:
+        self.seconds_left = seconds_left
+        self.settings = settings
+        self.connections: dict[str, Callable[..., None]] = {}
         self.timer = PreciseTimer(C.TIMER_INTERVAL, self.on_time_out)
 
-    def on_time_out(self):
-        """
-        Обработчик события таймера, вызываемый каждую секунду.
-        Отправляет уведомления о наступивших событиях.
-        """
-
+    def on_time_out(self) -> None:
         self.seconds_left -= 1
-        voice_interval = self.tunes.get_tune(C.TUNE_VOICE_INTERVAL)
-        beep_interval = self.tunes.get_tune(C.TUNE_BEEP_INTERVAL)
-        beep_period_in_final = self.tunes.get_tune(C.TUNE_BEEP_PERIOD_IN_FINAL)
 
-        # Отображение оставшегося времени
         self.callback("draw_time", self.seconds_left)
 
-        # Уведомление об окончании таймера
         if self.is_end_timer():
             self.callback("inform_done")
+            return
 
-        # Уведомление об оставшемся времени
-        if not self.seconds_left % voice_interval:
+        model = self.settings.model
+
+        if self.seconds_left % model.voice_interval == 0:
             self.callback("inform_voice", self.seconds_left)
 
-        # Уведомление о скором завершении таймера
         if (
-            self.seconds_left < beep_period_in_final
-            and not self.seconds_left % beep_interval
+            self.seconds_left < model.beep_period_in_final
+            and self.seconds_left % model.beep_interval == 0
         ):
             f.beep()
 
     def is_end_timer(self) -> bool:
-        """
-        Проверяет, истёк ли таймер.
-        :return True если таймер завершился, False - если НЕ завершился
-        """
-        if self.seconds_left <= 0:
-            # Завершаем выполнение программы
-            return True
-        return False
+        return self.seconds_left <= 0
 
-    def connect(self, name_callback: str, func: Callable):
-        """
-        Регистрация callback функции.
-        Args:
-            name_callback (str): - имя функции, используется в методе callback
-            func (Callable): - ссылка на регистрируемую функцию
-        """
+    def connect(self, name_callback: str, func: Callable[..., None]) -> None:
         if name_callback in self.connections:
             f.inform_fatal_error_and_quit(
-                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_ERROR_NAME_CALLBACK} {name_callback}"
+                C.TITLE_INTERNAL_ERROR,
+                f"{C.TEXT_ERROR_NAME_CALLBACK} {name_callback}",
             )
         self.connections[name_callback] = func
 
     def callback(self, func_name: str, param: int | None = None) -> None:
-        """
-        Вызывает callback функцию. Ссылки на функции хранятся в словаре self.connections
-        Args:
-            func_name(str): имя вызываемой функции
-            param: - параметр, передаваемый функции
-        """
         try:
+            callback = self.connections[func_name]
             if param is None:
-                self.connections[func_name]()
+                callback()
             else:
-                self.connections[func_name](param)
-        except Exception as e:
+                callback(param)
+        except Exception as err:
             f.inform_fatal_error_and_quit(
-                C.TITLE_INTERNAL_ERROR, f"{C.TEXT_ERROR_CALLBACK} {func_name} \n{e}"
+                C.TITLE_INTERNAL_ERROR,
+                f"{C.TEXT_ERROR_CALLBACK} {func_name}\n{err}",
             )
 
-    def start(self):
-        """Старт отсчёта точного таймера"""
+    def start(self) -> None:
         self.timer.start()

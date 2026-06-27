@@ -1,65 +1,32 @@
-from typing import Callable
+from collections.abc import Callable
 
-from PyQt6.QtCore import QTimer, QElapsedTimer
+from PyQt6.QtCore import QElapsedTimer, QTimer
 
 
 class PreciseTimer:
-    """Точный таймер. Похож на Qtimer, но исправляет его неточности измерения времени"""
+    """Точный таймер. Похож на QTimer, но компенсирует накопленный дрейф."""
 
-    def __init__(self, interval_ms: int, callback: Callable) -> None:
-        """
-        Инициализация точного таймера
-        :param interval_ms: Интервал прерываний точного таймера.
-        :param callback: Слот для прерываний точного таймера.
-        """
+    def __init__(self, interval_ms: int, callback: Callable[[], None]) -> None:
         self.interval = interval_ms
         self.callback = callback
-        self.elapsed = (
-            QElapsedTimer()
-        )  # Класс для точного измерения временных интервалов.
-        self.timer = (
-            QTimer()
-        )  # Класс для выдачи сигналов через заданный интервал времени.
-        self.timer.setSingleShot(True)  # Таймер будет выполняться только один раз.
+        self.elapsed = QElapsedTimer()
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
         self.timer.setInterval(self.interval)
-        self.timer.timeout.connect(
-            self._on_timeout
-        )  # Внутренний слот для обработки прерывания
-        self.tick_count = 0  # Количество прерываний точного таймера
+        self.timer.timeout.connect(self._on_timeout)
+        self.tick_count = 0
 
-    def start(self):
-        """Старт отсчёта точного таймера"""
-        self.elapsed.start()  # старт точного таймера для начала отсчёта интервала
-        self.timer.start(0)  # Первый тик сразу
+    def start(self) -> None:
+        self.elapsed.start()
+        self.timer.start(0)
 
-    def _on_timeout(self):
-        """Обработчик окончания работы QTimer"""
+    def _on_timeout(self) -> None:
         self.tick_count += 1
-        now = self.elapsed.elapsed()  # Время от начала работы точного таймера
+        now = self.elapsed.elapsed()
         expected_time = self.tick_count * self.interval
-        drift = now - expected_time  # Погрешность работы QTimer
+        drift = now - expected_time
 
-        # Вызов слота
         self.callback()
 
-        # Следующий запуск QTimer с учётом накопленного дрифта
-        next_delay = self.interval - drift
-        next_delay = max(0, next_delay)  # чтобы не было отрицательного времени
+        next_delay = max(0, self.interval - drift)
         self.timer.start(next_delay)
-
-
-if __name__ == "__main__":
-    import sys
-    from PyQt6.QtWidgets import QApplication
-
-    def on_precise_tick(now_ms, expected_ms, drift_ms):
-        print(
-            f"Тик #{pt.tick_count} | Реальное время: {now_ms} мс | Ожидалось: {expected_ms} мс | Дрифт: {drift_ms:+} мс"
-        )
-
-    app = QApplication(sys.argv)
-
-    pt = PreciseTimer(1000, on_precise_tick)
-    pt.start()
-
-    sys.exit(app.exec())

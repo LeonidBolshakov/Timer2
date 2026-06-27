@@ -1,98 +1,101 @@
-import threading  # Для работы с потоками
-import sys
 import io
+import sys
+import threading
 
-import pyttsx3  # type: ignore # Для синтеза речи
+import pyttsx3  # type: ignore
 from PyQt6.QtCore import QEventLoop, QTimer
 
-sys.stdout = io.StringIO()  # Заглушает вывод рекламы
+sys.stdout = io.StringIO()
 import pygame  # type: ignore
 
 sys.stdout = sys.__stdout__
 
-import functions as f  # Импорт пользовательских функций
+import functions as f
 from const import Const as C
-from tunes import Tunes
 from signals import signals
+from tunes import TunesSettings
 
 
 class InformTime:
-    """
-    Класс для голосового информирования об оставшемся времени.
+    """Голосовое и звуковое информирование пользователя."""
 
-    Методы:
-        inform_voice(seconds: int): Преобразует оставшееся время в текст и воспроизводит его голосом
-        inform_time_left(seconds: int): Информирует пользователя голосом через заданные интервалы времени.
-    """
-
-    def __init__(self) -> None:
-        """
-        Инициализация класса InformTimeLeft.
-        Создаёт экземпляр движка синтеза речи (pyttsx3).
-        """
-        super().__init__()
-        self.tunes = Tunes()
-
-        try:
-            self.voice_engine = pyttsx3.init()  # Инициализация синтезатора речи
-        except Exception as e:
-            f.inform_fatal_error(C.TITLE_ERROR_SPEACH, f"{C.TEXT_NO_INIT_SPEECH}\n{e}")
-
-    def voice(self, seconds: int) -> None:
-        """
-        Преобразует количество оставшихся секунд в текст и воспроизводит его голосом.
-
-        Args:
-            seconds (int): Оставшееся время в секундах.
-        """
-        self.voice_engine.say(f.time_to_text(seconds))  # Преобразуем секунды в текст
-        try:
-            self.voice_engine.runAndWait()  # Запускаем воспроизведение речи
-        except RuntimeError:
-            pass  # Игнорируем вывод нового сообщения до окончания вывода предыдущего
-        return
+    def __init__(self, settings: TunesSettings) -> None:
+        self.settings = settings
+        self.voice_lock = threading.Lock()
 
     def inform_voice(self, seconds: int) -> None:
         """
-        Информирует голосом об оставшемся времени.
-        Запускает воспроизведение речи в отдельном потоке, чтобы не блокировать выполнение программы.
+        Запускает голосовое сообщение в отдельном потоке.
 
-        Args:
-            seconds (int): Оставшееся время в секундах.
+        Для каждого сообщения создаётся отдельный pyttsx3 engine.
+        Это устойчивее, чем многократно использовать один общий engine.
         """
-
-        # Создаём и запускаем отдельный поток для голосового оповещения
-        thread = threading.Thread(target=self.voice, args=(seconds,), daemon=True)
+        thread = threading.Thread(
+            target=self._voice_once,
+            args=(seconds,),
+            daemon=True,
+        )
         thread.start()
-        return
+
+    def _voice_once(self, seconds: int) -> None:
+        """
+        Однократно произносит остаток времени.
+
+        Если предыдущее голосовое сообщение ещё не закончилось,
+        новое сообщение пропускается.
+        """
+        if not self.voice_lock.acquire(blocking=False):
+            return
+
+        voice_engine = None
+
+        try:
+            text = f.time_to_text(seconds)
+
+            voice_engine = pyttsx3.init()
+            voice_engine.say(text)
+            voice_engine.runAndWait()
+
+        except Exception as err:
+            print(f"Ошибка голосового сообщения: {type(err).__name__}: {err}")
+
+        finally:
+            if voice_engine is not None:
+                try:
+                    # noinspection PyUnresolvedReferences
+                    voice_engine.stop()
+                except Exception:
+                    pass
+
+            self.voice_lock.release()
 
     def inform_done(self) -> None:
-        """
-        Воспроизводит мелодию, информирующую о завершении работы таймера.
-        """
-        file_melody = self.tunes.get_tune(C.TUNE_FILE_MELODY)
-        if file_melody:
-            try:
-                pygame.init()
-                pygame.mixer.init()
-                pygame.mixer.music.load(file_melody)
-                pygame.mixer.music.play()  # Обращение к pygame.mixer для проигрывания мелодии
-            except Exception as e:
-                f.inform_fatal_error(
-                    C.TITLE_INTERNAL_ERROR, f"{C.TEXT_NO_PLAY_MELODY}\n{e}"
-                )
-            self.control_end_of_melody()
-            f.go_quit()
-        else:
-            f.inform_fatal_error(C.TITLE_NO_MELODY, C.TEXT_NO_MELODY)
+        file_melody = self.settings.model.file_melody
+
+        if not file_melody:
+            f.inform_fatal_error_and_quit(C.TITLE_NO_MELODY, C.TEXT_NO_MELODY)
+
+        try:
+            pygame.init()
+            pygame.mixer.init()
+            pygame.mixer.music.load(file_melody)
+            pygame.mixer.music.play()
+
+        except Exception as err:
+            f.inform_fatal_error_and_quit(
+                C.TITLE_INTERNAL_ERROR,
+                f"{C.TEXT_NO_PLAY_MELODY}\n{err}",
+            )
+
+        self.control_end_of_melody()
+        f.go_quit()
 
     @staticmethod
     def control_end_of_melody() -> None:
-        """Ожидает получения сигнала завершения проигрывания мелодии.
-        При получении сигнала прекращает ожидание"""
         timer = QTimer()
         timer.timeout.connect(f.check_music_finished)
         timer.start(C.END_CHECK_INTERVAL)
+
         loop = QEventLoop()
         signals.melody_finished.connect(loop.quit)
-        loop.exec()  # Ожидание окончания проигрывания
+        loop.exec()
