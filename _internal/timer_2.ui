@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>411</width>
+    <width>368</width>
     <height>323</height>
    </rect>
   </property>
@@ -226,7 +226,7 @@
           </font>
          </property>
          <property name="text">
-          <string>Введите время работы таймера в часах и минутах или в минутах и секундах.</string>
+          <string>Введите время таймера в часах и минутах или в минутах и секундах</string>
          </property>
         </widget>
        </item>
@@ -242,13 +242,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>78</width>
+             <width>110</width>
              <height>22</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>78</width>
+             <width>110</width>
              <height>22</height>
             </size>
            </property>
@@ -647,13 +647,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>78</width>
+             <width>110</width>
              <height>22</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>78</width>
+             <width>110</width>
              <height>22</height>
             </size>
            </property>

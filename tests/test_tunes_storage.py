@@ -26,9 +26,11 @@ def test_load_missing_user_file_returns_defaults_and_creates_file() -> None:
 
     assert dto == default_dto()
     assert storage.settings_file.exists()
-    assert json.loads(storage.settings_file.read_text(encoding="utf-8")) == dto_to_json_dict(
-        default_dto()
-    )
+
+    saved_text = storage.settings_file.read_text(encoding="utf-8")
+    saved_data = json.loads(saved_text)
+    assert saved_data == dto_to_json_dict(default_dto())
+
     assert storage.pop_warnings()
 
 
@@ -74,7 +76,9 @@ def test_load_non_dict_json_returns_defaults_and_warning() -> None:
     dto = storage.load()
 
     assert dto == default_dto()
-    assert any("некорректную структуру" in warning for warning in storage.pop_warnings())
+
+    warnings = storage.pop_warnings()
+    assert any("некорректную структуру" in warning for warning in warnings)
 
 
 def test_switch_settings_file_updates_registry_and_saves_selected_file(
@@ -94,7 +98,9 @@ def test_switch_settings_file_updates_registry_and_saves_selected_file(
     assert new_settings_file.exists()
 
 
-def test_load_active_settings_file_falls_back_on_broken_registry(tmp_path: Path) -> None:
+def test_broken_active_registry_falls_back_to_default(
+    tmp_path: Path,
+) -> None:
     app_dir = tmp_path / "Timer_2"
     app_dir.mkdir(parents=True)
     (app_dir / ACTIVE_SETTINGS_FILE_NAME).write_text("[]", encoding="utf-8")
