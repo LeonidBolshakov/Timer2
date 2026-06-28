@@ -82,6 +82,12 @@ python -m ruff check .
 python -m mypy .
 ```
 
+## Запуск тестов
+
+```bash
+run_tests.bat
+```
+
 ## Сборка Windows-приложения
 
 ```bash
