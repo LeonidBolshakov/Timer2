@@ -63,7 +63,7 @@ python -m venv .venv
 .venv\Scripts\activate
 python -m pip install -U pip
 python -m pip install -r requirements.txt
-python timer_2.py
+python main.py
 ```
 
 Для Linux/macOS команда активации окружения отличается:

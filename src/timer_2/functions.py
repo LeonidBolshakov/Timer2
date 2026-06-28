@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import QApplication, QLineEdit, QMessageBox
 from num2words import num2words  # type: ignore
 import pygame
 
-from const import Const as C
-from signals import signals
+from .const import Const as C
+from .signals import signals
 
 PROGRAM_NAME = "Timer_2"
 
@@ -47,7 +47,10 @@ def time_to_text(seconds: int) -> str:
 def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
     if number == 0:
         return ""
-    return f"{num2words(number, lang=C.LANG_RU, gender=gender)} {get_word_form(number, word_forms)} "
+    return (
+        f"{num2words(number, lang=C.LANG_RU, gender=gender)} "
+        f"{get_word_form(number, word_forms)} "
+    )
 
 
 def get_word_form(number: int, word_after_number: list[str]) -> str:

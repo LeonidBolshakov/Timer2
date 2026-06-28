@@ -1,5 +1,5 @@
-from tunes_mapper import default_dto, json_dict_to_dto
-from tunes_schema import CURRENT_SETTINGS_VERSION
+from src.timer_2.tunes_mapper import default_dto, json_dict_to_dto
+from src.timer_2.tunes_schema import CURRENT_SETTINGS_VERSION
 
 
 def test_invalid_json_root_falls_back_to_defaults() -> None:

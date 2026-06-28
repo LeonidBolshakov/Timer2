@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TypeAlias
 
-from tune_key import TuneKey
+from .tune_key import TuneKey
 
-TuneValue: TypeAlias = str | int | bool
+type TuneValue = str | int | bool
 
 
 @dataclass(slots=True)

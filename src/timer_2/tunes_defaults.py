@@ -1,4 +1,4 @@
-from tunes_model import TunesModel
+from .tunes_model import TunesModel
 
 
 def default_model() -> TunesModel:
@@ -7,7 +7,7 @@ def default_model() -> TunesModel:
     Это единственный источник значений по умолчанию.
     """
     return TunesModel(
-        file_melody="_internal\\default.mp3",
+        file_melody="_internal/default.mp3",
         voice_interval=10,
         beep_interval=3,
         beep_period_in_final=11,

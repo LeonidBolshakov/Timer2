@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from tunes_defaults import default_model
-from tunes_dto import TunesDTO
-from tunes_schema import CURRENT_SETTINGS_VERSION
-from tunes_model import TunesModel
+from .tunes_defaults import default_model
+from .tunes_dto import TunesDTO
+from .tunes_schema import CURRENT_SETTINGS_VERSION
+from .tunes_model import TunesModel
 
 
 def dto_to_model(dto: TunesDTO) -> TunesModel:

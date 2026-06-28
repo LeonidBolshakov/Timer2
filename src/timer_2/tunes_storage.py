@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from tunes_dto import TunesDTO
-from tunes_mapper import default_dto, dto_to_json_dict, json_dict_to_dto
+from .tunes_dto import TunesDTO
+from .tunes_mapper import default_dto, dto_to_json_dict, json_dict_to_dto
 
 PROGRAM_NAME = "Timer_2"
 

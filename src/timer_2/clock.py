@@ -1,9 +1,9 @@
 from collections.abc import Callable
 
-from precise_timer import PreciseTimer
-from const import Const as C
-import functions as f
-from tunes import TunesSettings
+from .precise_timer import PreciseTimer
+from .const import Const as C
+from .tunes import TunesSettings
+from . import functions as f
 
 
 class Clock:

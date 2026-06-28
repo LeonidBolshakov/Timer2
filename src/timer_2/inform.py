@@ -1,7 +1,9 @@
 import io
 import sys
 import threading
+from contextlib import suppress
 
+from pyttsx3.engine import Engine
 import pyttsx3  # type: ignore
 from PyQt6.QtCore import QEventLoop, QTimer
 
@@ -10,10 +12,10 @@ import pygame  # type: ignore
 
 sys.stdout = sys.__stdout__
 
-import functions as f
-from const import Const as C
-from signals import signals
-from tunes import TunesSettings
+from . import functions as f
+from .const import Const as C
+from .signals import signals
+from .tunes import TunesSettings
 
 
 class InformTime:
@@ -47,25 +49,26 @@ class InformTime:
         if not self.voice_lock.acquire(blocking=False):
             return
 
-        voice_engine = None
+        voice_engine: Engine | None = None
 
         try:
             text = f.time_to_text(seconds)
 
-            voice_engine = pyttsx3.init()
-            voice_engine.say(text)
-            voice_engine.runAndWait()
+            engine = pyttsx3.init()
+            if engine is None:
+                raise RuntimeError("pyttsx3.init() вернул None")
+
+            voice_engine = engine
+            engine.say(text)
+            engine.runAndWait()
 
         except Exception as err:
             print(f"Ошибка голосового сообщения: {type(err).__name__}: {err}")
 
         finally:
             if voice_engine is not None:
-                try:
-                    # noinspection PyUnresolvedReferences
+                with suppress(Exception):
                     voice_engine.stop()
-                except Exception:
-                    pass
 
             self.voice_lock.release()
 

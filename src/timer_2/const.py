@@ -7,7 +7,7 @@ class Const:
 
     ACTIVE_FIELD_BG_COLOR = "QLineEdit { background-color: #f5ffb3; }"
     END_CHECK_INTERVAL = 100
-    FILE_TUNES_0 = "tunes.json"
+    FILE_TUNES_0 = "../../tunes.json"
 
     FORMS_HOUR = ["часов", "час", "часа"]
     FORMS_MINUTE = ["минут", "минута", "минуты"]
@@ -25,9 +25,16 @@ class Const:
     SECONDS_IN_MINUTE = 60
 
     TEXT_ERROR_CALLBACK = "Класс Clock. Неверно указана функция callback - "
-    TEXT_ERROR_NAME_CALLBACK = "Класс Clock. Функция callback регистрируется повторно - "
-    TEXT_ERROR_PARAM = "методу timer_2.active_time_field передан непредусмотренный параметр widget."
-    TEXT_ERROR_READ = "Файл настроек недоступен или в нём недостоверная информация.\nРаботаем с настройками по умолчанию"
+    TEXT_ERROR_NAME_CALLBACK = (
+        "Класс Clock. Функция callback регистрируется повторно - "
+    )
+    TEXT_ERROR_PARAM = (
+        "методу timer_2.active_time_field передан непредусмотренный параметр widget."
+    )
+    TEXT_ERROR_READ = (
+        "Файл настроек недоступен или в нём недостоверная информация.\n"
+        "Работаем с настройками по умолчанию"
+    )
     TEXT_ERROR_UNKNOWN = "Неизвестная ошибка"
     TEXT_ERROR_VALUE = "Неправильное значение настройки"
     TEXT_ERROR_WRITE = "Настройки программы не сохранены.\n"

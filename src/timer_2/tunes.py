@@ -15,11 +15,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from const import Const as C
-from tune_key import TuneKey
-from tunes_mapper import dto_to_model, model_to_dto
-from tunes_model import TuneValue, TunesModel
-from tunes_storage import TunesStorage
+from .const import Const as C
+from .tune_key import TuneKey
+from .tunes_mapper import dto_to_model, model_to_dto
+from .tunes_model import TuneValue, TunesModel
+from .tunes_storage import TunesStorage
 
 
 class TunesSettings:

@@ -1,6 +1,7 @@
 import io
 import sys
 from enum import Enum
+from contextlib import suppress
 
 sys.stdout = io.StringIO()
 import pygame  # type: ignore
@@ -19,12 +20,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from clock import Clock
-from const import Const as C
-import functions as f
-from inform import InformTime
-from tune_key import TuneKey
-from tunes import TunesSettings, TunesWindow
+from .clock import Clock
+from .const import Const as C
+from . import functions as f
+from .inform import InformTime
+from .tune_key import TuneKey
+from .tunes import TunesSettings, TunesWindow
 
 
 class TimeField(Enum):
@@ -264,10 +265,8 @@ class Timer2(QMainWindow):
 if __name__ == "__main__":
 
     def on_app_exit() -> None:
-        try:
+        with suppress(pygame.error):
             pygame.mixer.quit()
-        except pygame.error:
-            pass
 
     app = QApplication(sys.argv)
     app.aboutToQuit.connect(on_app_exit)
