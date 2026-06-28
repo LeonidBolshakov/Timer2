@@ -1,0 +1,55 @@
+[project]
+name = "timer-2"
+version = "0.1.0"
+description = "Desktop countdown timer with voice and sound notifications"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Леонид Большаков" }
+]
+dependencies = [
+    "PyQt6>=6.8,<6.10",
+    "pygame>=2.6,<3",
+    "pyttsx3>=2.98,<3",
+    "num2words>=0.5.14,<0.6",
+    "pywin32>=308; platform_system == 'Windows'",
+    "comtypes>=1.4.10; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1,<26",
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<9",
+    "ruff>=0.11,<1",
+    "pyinstaller>=6.13,<7",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "SIM"]
+ignore = [
+    "E402", # pygame импортируется после установки PYGAME_HIDE_SUPPORT_PROMPT
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+exclude = [
+    "build/",
+    "dist/",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
