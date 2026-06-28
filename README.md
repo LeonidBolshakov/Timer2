@@ -30,7 +30,7 @@ Desktop‑таймер обратного отсчёта на **Python + PyQt6**
 
 ## Стек
 
-- Python 3.11+
+- Python 3.13+
 - PyQt6
 - pygame
 - pyttsx3
@@ -82,7 +82,7 @@ python -m ruff check .
 python -m mypy .
 ```
 
-## Запуск тестов
+## Запуск тестов под Windows
 
 ```bash
 run_tests.bat
