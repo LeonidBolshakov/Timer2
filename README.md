@@ -210,7 +210,7 @@ run_tests.bat
 Запустить сборку:
 
 ```cmd
-.venv\Scripts\python.exe -m PyInstaller --clean timer_2.spec
+build_exe.bat
 ```
 
 Результат сборки появится в каталоге:

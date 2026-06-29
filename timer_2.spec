@@ -40,6 +40,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon="_internal\\glass.ico",
 )
 
 coll = COLLECT(
