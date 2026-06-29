@@ -20,6 +20,7 @@ def num(line_edit: QLineEdit) -> int:
 
 
 def go_quit() -> NoReturn:
+    # noinspection PyArgumentList
     app = QApplication.instance()
     if app is not None:
         app.quit()
@@ -67,6 +68,7 @@ def get_word_form(number: int, word_after_number: list[str]) -> str:
 
 
 def beep() -> None:
+    # noinspection PyArgumentList
     QApplication.beep()
 
 
@@ -87,7 +89,10 @@ def get_app_settings_dir() -> Path:
 
 
 def resource_path(path: str | Path) -> Path:
-    """Возвращает путь к ресурсу в исходниках, PyInstaller-сборке или внешний абсолютный путь."""
+    """
+    Возвращает путь к ресурсу в исходниках,
+    PyInstaller-сборке или внешний абсолютный путь.
+    """
     resource = Path(path)
 
     if resource.is_absolute():
