@@ -40,7 +40,9 @@ Desktop-таймер обратного отсчёта на **Python + PyQt6**.
 * PyInstaller для сборки Windows-версии
 
 > Рекомендуемая версия Python для проекта — **3.13**.
+>
 > Проект ориентирован на Windows.
+>
 > На Python 3.14 отдельные зависимости, например `pygame`, могут устанавливаться не из готового wheel-файла, а через сборку из исходников.
 
 ## Структура проекта
@@ -107,7 +109,12 @@ cd Timer2
 
 1. На странице репозитория GitHub нажмите **Code → Download ZIP**.
 2. Распакуйте архив в удобную папку.
-3. Откройте командную строку или PowerShell в распакованной папке проекта.
+3. Откройте распакованную папку проекта в Проводнике Windows.
+4. В адресной строке Проводника введите:
+
+```cmd
+cmd
+```
 
 ### Создание виртуального окружения
 
@@ -120,6 +127,7 @@ py -3.13 -m venv .venv
 ```cmd
 .venv\Scripts\python.exe -m pip install -U pip
 .venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pip install -e .
 ```
 
 ### Запуск приложения
@@ -128,7 +136,7 @@ py -3.13 -m venv .venv
 .venv\Scripts\python.exe -m timer_2.main
 ```
 
-Важно: в командах выше используется не просто `python`, а именно:
+Важно: в командах ниже используется не просто `python`, а именно:
 
 ```cmd
 .venv\Scripts\python.exe
