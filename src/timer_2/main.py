@@ -48,7 +48,7 @@ class Timer2(QMainWindow):
     lineEdit_MS_S: QLineEdit
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(None)
         uic.loadUi(str(f.resource_path(C.TIMER_2_UI)), self)
 
         self.settings = TunesSettings()
@@ -259,10 +259,11 @@ class Timer2(QMainWindow):
 
     def start(self) -> int:
         self.show()
+        # noinspection PyArgumentList
         return QApplication.exec()
 
 
-def main():
+def main() -> None:
     def on_app_exit() -> None:
         with suppress(pygame.error):
             pygame.mixer.quit()
