@@ -73,6 +73,7 @@ Desktop-таймер обратного отсчёта на **Python + PyQt6**.
 ├── requirements.txt                # runtime-зависимости
 ├── requirements-dev.txt            # зависимости для разработки
 ├── pyproject.toml                  # конфигурация проекта и инструментов
+├── run_timer.py                    # файл запуска приложения для PyInstaller
 ├── run_tests.bat                   # запуск тестов под Windows
 └── timer_2.spec                    # сборка через PyInstaller
 ```
@@ -116,6 +117,8 @@ cd Timer2
 cmd
 ```
 
+Нажмите `Enter`. Откроется командная строка сразу в корневой директории проекта.
+
 ### Создание виртуального окружения
 
 ```cmd
@@ -136,7 +139,7 @@ py -3.13 -m venv .venv
 .venv\Scripts\python.exe -m timer_2.main
 ```
 
-Важно: в командах ниже используется не просто `python`, а именно:
+Важно: в командах проекта используется не просто `python`, а именно:
 
 ```cmd
 .venv\Scripts\python.exe
@@ -207,13 +210,19 @@ run_tests.bat
 Запустить сборку:
 
 ```cmd
-.venv\Scripts\python.exe -m PyInstaller timer_2.spec
+.venv\Scripts\python.exe -m PyInstaller --clean timer_2.spec
 ```
 
 Результат сборки появится в каталоге:
 
 ```text
-dist/
+dist\timer_2\
+```
+
+Основной исполняемый файл:
+
+```text
+dist\timer_2\timer_2.exe
 ```
 
 ## Настройки
@@ -241,6 +250,7 @@ examples/settings.example.json
 * Есть защита от повреждённых файлов настроек.
 * Есть unit-тесты для чистой бизнес-логики.
 * Есть конфигурация инструментов разработки.
+* Внутренние ресурсы приложения (`.ui`, `.jpg`, `.mp3`) корректно подключаются при запуске из исходников и из PyInstaller-сборки.
 * Учтена сборка standalone-приложения через PyInstaller.
 
 ## Ограничения

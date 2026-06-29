@@ -77,11 +77,11 @@ class InformTime:
 
         if not file_melody:
             f.inform_fatal_error_and_quit(C.TITLE_NO_MELODY, C.TEXT_NO_MELODY)
-
+        melody_path = f.resource_path(file_melody)
         try:
             pygame.init()
             pygame.mixer.init()
-            pygame.mixer.music.load(file_melody)
+            pygame.mixer.music.load(melody_path)
             pygame.mixer.music.play()
 
         except Exception as err:
@@ -93,6 +93,7 @@ class InformTime:
         self.control_end_of_melody()
         f.go_quit()
 
+    # noinspection PyArgumentList,PyUnresolvedReferences
     @staticmethod
     def control_end_of_melody() -> None:
         timer = QTimer()

@@ -1,17 +1,18 @@
-# -*- mode: python ; coding: utf-8 -*-
+from pathlib import Path
 
+project_root = Path.cwd()
+src_dir = project_root / "src"
 
 a = Analysis(
-    ['timer_2.py'],
-    pathex=[],
-    binaries=[
-	('_internal\\default.mp3', '.'),
-	('_internal\\glass.jpg', '.'),
-],
+    ["run_timer.py"],
+    pathex=[str(src_dir)],
+    binaries=[],
     datas=[
-	('_internal\\timer_2.ui', '.'),
-	('_internal\\tunes.ui', '.'),
-],
+        ("_internal\\default.mp3", "_internal"),
+        ("_internal\\glass.jpg", "_internal"),
+        ("_internal\\timer_2.ui", "_internal"),
+        ("_internal\\tunes.ui", "_internal"),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -20,6 +21,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -27,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='timer_2',
+    name="timer_2",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -39,6 +41,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -46,5 +49,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='timer_2',
+    name="timer_2",
 )

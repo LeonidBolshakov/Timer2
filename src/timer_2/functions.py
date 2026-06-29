@@ -84,3 +84,18 @@ def get_app_settings_dir() -> Path:
     settings_dir = Path(os.getenv("APPDATA", Path.home())) / PROGRAM_NAME
     settings_dir.mkdir(parents=True, exist_ok=True)
     return settings_dir
+
+
+def resource_path(path: str | Path) -> Path:
+    """Возвращает путь к ресурсу в исходниках, PyInstaller-сборке или внешний абсолютный путь."""
+    resource = Path(path)
+
+    if resource.is_absolute():
+        return resource
+
+    if getattr(sys, "frozen", False):
+        base_dir = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+    else:
+        base_dir = Path(__file__).resolve().parents[2]
+
+    return base_dir / resource

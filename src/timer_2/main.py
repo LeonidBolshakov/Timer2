@@ -49,7 +49,7 @@ class Timer2(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        uic.loadUi(C.TIMER_2_UI, self)
+        uic.loadUi(str(f.resource_path(C.TIMER_2_UI)), self)
 
         self.settings = TunesSettings()
         self.clock: Clock | None = None
@@ -262,8 +262,7 @@ class Timer2(QMainWindow):
         return QApplication.exec()
 
 
-if __name__ == "__main__":
-
+def main():
     def on_app_exit() -> None:
         with suppress(pygame.error):
             pygame.mixer.quit()
@@ -273,3 +272,7 @@ if __name__ == "__main__":
 
     timer_2_app = Timer2()
     sys.exit(timer_2_app.start())
+
+
+if __name__ == "__main__":
+    main()

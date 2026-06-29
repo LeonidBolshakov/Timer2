@@ -20,6 +20,7 @@ from .tune_key import TuneKey
 from .tunes_mapper import dto_to_model, model_to_dto
 from .tunes_model import TuneValue, TunesModel
 from .tunes_storage import TunesStorage
+from . import functions as f
 
 
 class TunesSettings:
@@ -64,7 +65,7 @@ class TunesWindow(QWidget):
     def __init__(self, settings: TunesSettings) -> None:
         super().__init__()
         self.settings = settings
-        uic.loadUi(C.TUNES_UI, self)
+        uic.loadUi(str(f.resource_path(C.TUNES_UI)), self)
 
         self._connect_signals()
         self._set_validators()
