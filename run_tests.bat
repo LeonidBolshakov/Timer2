@@ -17,7 +17,7 @@ if not exist "%PYTHON_EXE%" (
 echo Запуск тестов...
 echo.
 
-"%PYTHON_EXE%" -m pytest -q tests
+"%PYTHON_EXE%" -m pytest -q tests --basetemp=.pytest_tmp
 
 set "EXIT_CODE=%ERRORLEVEL%"
 

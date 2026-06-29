@@ -31,3 +31,4 @@ Thumbs.db
 # Local runtime files
 *.log
 *.tmp
+.pytest_tmp/

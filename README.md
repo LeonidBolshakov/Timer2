@@ -157,7 +157,7 @@ py -3.13 -m venv .venv
 Запуск тестов:
 
 ```cmd
-.venv\Scripts\python.exe -m pytest -q
+.venv\Scripts\python.exe -m pytest -q --basetemp=.pytest_tmp
 ```
 
 Или через bat-файл из корня проекта:
