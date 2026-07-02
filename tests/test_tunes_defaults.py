@@ -1,6 +1,6 @@
-from timer_2.tunes_defaults import default_model
-from timer_2.tunes_mapper import default_dto
-from timer_2.tunes_schema import CURRENT_SETTINGS_VERSION
+from timer_3.tunes_defaults import default_model
+from timer_3.tunes_mapper import default_dto
+from timer_3.tunes_schema import CURRENT_SETTINGS_VERSION
 
 
 def test_default_dto_matches_default_model() -> None:

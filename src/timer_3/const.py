@@ -29,7 +29,7 @@ class Const:
         "Класс Clock. Функция callback регистрируется повторно - "
     )
     TEXT_ERROR_PARAM = (
-        "методу timer_2.active_time_field передан непредусмотренный параметр widget."
+        "методу timer_3.active_time_field передан непредусмотренный параметр widget."
     )
     TEXT_ERROR_READ = (
         "Файл настроек недоступен или в нём недостоверная информация.\n"
@@ -44,7 +44,7 @@ class Const:
     TEXT_NO_MELODY = "Не задана мелодия окончания таймера"
     TEXT_NO_PLAY_MELODY = "Ошибка при инициализации/использовании проигрывателя музыки"
 
-    TIMER_2_UI = "_internal/timer_2.ui"
+    TIMER_3_UI = "_internal/timer_3.ui"
     TIMER_INTERVAL = 1000
     TUNES_UI = "_internal/tunes.ui"
 

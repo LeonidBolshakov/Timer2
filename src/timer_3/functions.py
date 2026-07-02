@@ -12,7 +12,7 @@ import pygame
 from .const import Const as C
 from .signals import signals
 
-PROGRAM_NAME = "Timer_2"
+PROGRAM_NAME = "Timer_3"
 
 
 def num(line_edit: QLineEdit) -> int:

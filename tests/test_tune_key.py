@@ -1,4 +1,4 @@
-from timer_2.tune_key import TuneKey
+from timer_3.tune_key import TuneKey
 
 
 def test_tune_key_values_are_stable() -> None:

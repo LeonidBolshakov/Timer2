@@ -10,7 +10,7 @@ a = Analysis(
     datas=[
         ("_internal\\default.mp3", "_internal"),
         ("_internal\\glass.jpg", "_internal"),
-        ("_internal\\timer_2.ui", "_internal"),
+        ("_internal\\timer_3.ui", "_internal"),
         ("_internal\\tunes.ui", "_internal"),
     ],
     hiddenimports=[],
@@ -29,7 +29,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="timer_2",
+    name="timer_3",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -50,5 +50,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name="timer_2",
+    name="timer_3",
 )

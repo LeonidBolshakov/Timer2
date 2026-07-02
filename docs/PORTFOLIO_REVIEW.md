@@ -22,7 +22,7 @@
    python -m pytest
    python -m ruff check .
    python -m mypy .
-   pyinstaller timer_2.spec
+   pyinstaller timer_3.spec
    ```
 
 4. Создать короткое описание репозитория:

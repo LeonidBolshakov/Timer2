@@ -8,7 +8,7 @@ from typing import Any
 from .tunes_dto import TunesDTO
 from .tunes_mapper import default_dto, dto_to_json_dict, json_dict_to_dto
 
-PROGRAM_NAME = "Timer_2"
+PROGRAM_NAME = "Timer_3"
 
 ACTIVE_SETTINGS_FILE_NAME = "active_settings.json"
 ACTIVE_SETTINGS_KEY = "active_settings_file"

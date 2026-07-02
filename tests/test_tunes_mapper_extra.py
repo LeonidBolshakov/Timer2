@@ -1,12 +1,12 @@
-from timer_2.tunes_dto import TunesDTO
-from timer_2.tunes_mapper import (
+from timer_3.tunes_dto import TunesDTO
+from timer_3.tunes_mapper import (
     default_dto,
     dto_to_json_dict,
     dto_to_model,
     json_dict_to_dto,
     model_to_dto,
 )
-from timer_2.tunes_schema import CURRENT_SETTINGS_VERSION
+from timer_3.tunes_schema import CURRENT_SETTINGS_VERSION
 
 
 def test_dto_to_model_and_back_preserves_values() -> None:

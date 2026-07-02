@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from timer_2.tunes_mapper import default_dto, dto_to_json_dict
-from timer_2.tunes_storage import (
+from timer_3.tunes_mapper import default_dto, dto_to_json_dict
+from timer_3.tunes_storage import (
     ACTIVE_SETTINGS_FILE_NAME,
     ACTIVE_SETTINGS_KEY,
     TunesStorage,
@@ -89,7 +89,7 @@ def test_switch_settings_file_updates_registry_and_saves_selected_file(
 
     dto = storage.switch_settings_file(new_settings_file)
 
-    registry_file = tmp_path / "Timer_2" / ACTIVE_SETTINGS_FILE_NAME
+    registry_file = tmp_path / "Timer_3" / ACTIVE_SETTINGS_FILE_NAME
     registry = json.loads(registry_file.read_text(encoding="utf-8"))
 
     assert dto == default_dto()
@@ -101,7 +101,7 @@ def test_switch_settings_file_updates_registry_and_saves_selected_file(
 def test_broken_active_registry_falls_back_to_default(
     tmp_path: Path,
 ) -> None:
-    app_dir = tmp_path / "Timer_2"
+    app_dir = tmp_path / "Timer_3"
     app_dir.mkdir(parents=True)
     (app_dir / ACTIVE_SETTINGS_FILE_NAME).write_text("[]", encoding="utf-8")
 

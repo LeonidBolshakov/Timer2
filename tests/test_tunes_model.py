@@ -1,7 +1,7 @@
 import pytest
 
-from timer_2.tune_key import TuneKey
-from timer_2.tunes_defaults import default_model
+from timer_3.tune_key import TuneKey
+from timer_3.tunes_defaults import default_model
 
 
 def test_default_model_contains_valid_values() -> None:

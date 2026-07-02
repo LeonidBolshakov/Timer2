@@ -50,7 +50,7 @@ Desktop-таймер обратного отсчёта на **Python + PyQt6**.
 ```text
 .
 ├── src/
-│   └── timer_2/
+│   └── timer_3/
 │       ├── __init__.py
 │       ├── main.py                 # точка входа приложения
 │       ├── clock.py                # логика обратного отсчёта
@@ -75,7 +75,7 @@ Desktop-таймер обратного отсчёта на **Python + PyQt6**.
 ├── pyproject.toml                  # конфигурация проекта и инструментов
 ├── run_timer.py                    # файл запуска приложения для PyInstaller
 ├── run_tests.bat                   # запуск тестов под Windows
-└── timer_2.spec                    # сборка через PyInstaller
+└── timer_3.spec                    # сборка через PyInstaller
 ```
 
 ## Быстрый запуск из исходников под Windows
@@ -97,13 +97,13 @@ cd /d <Ваша директория>
 Склонируйте репозиторий:
 
 ```cmd
-git clone https://github.com/LeonidBolshakov/Timer2.git
+git clone https://github.com/LeonidBolshakov/Timer3.git
 ```
 
 Перейдите в корневую директорию проекта:
 
 ```cmd
-cd Timer2
+cd Timer3
 ```
 
 #### Вариант 2. Через ZIP-архив
@@ -136,7 +136,7 @@ py -3.13 -m venv .venv
 ### Запуск приложения
 
 ```cmd
-.venv\Scripts\python.exe -m timer_2.main
+.venv\Scripts\python.exe -m timer_3.main
 ```
 
 Важно: в командах проекта используется не просто `python`, а именно:
@@ -216,13 +216,13 @@ build_exe.bat
 Результат сборки появится в каталоге:
 
 ```text
-dist\timer_2\
+dist\timer_3\
 ```
 
 Основной исполняемый файл:
 
 ```text
-dist\timer_2\timer_2.exe
+dist\timer_3\timer_3.exe
 ```
 
 ## Настройки
@@ -230,7 +230,7 @@ dist\timer_2\timer_2.exe
 При первом запуске программа автоматически создаёт файл настроек по умолчанию:
 
 ```text
-%APPDATA%\Timer_2\profiles\user.json
+%APPDATA%\Timer_3\profiles\user.json
 ```
 
 Этот файл используется как стандартный набор настроек.
@@ -246,7 +246,7 @@ examples/settings.example.json
 ## Особенности
 
 * GUI-приложение сделано не как один учебный скрипт, а как набор отдельных компонентов.
-* Используется пакетная структура `src/timer_2`.
+* Используется пакетная структура `src/timer_3`.
 * Логика таймера отделена от окна приложения.
 * Настройки вынесены в отдельный DTO/model/storage-слой.
 * Есть защита от повреждённых файлов настроек.

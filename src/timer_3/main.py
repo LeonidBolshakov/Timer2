@@ -35,7 +35,7 @@ class TimeField(Enum):
     MS = 2
 
 
-class Timer2(QMainWindow):
+class Timer_3(QMainWindow):
     """Главное окно приложения."""
 
     btnQuit: QPushButton
@@ -49,7 +49,7 @@ class Timer2(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__(None)
-        uic.loadUi(str(f.resource_path(C.TIMER_2_UI)), self)
+        uic.loadUi(str(f.resource_path(C.TIMER_3_UI)), self)
 
         self.settings = TunesSettings()
         self.clock: Clock | None = None
@@ -96,6 +96,7 @@ class Timer2(QMainWindow):
         )
 
     def set_bolds(self) -> None:
+        return
         for line_edit in (
             self.lineEdit_HM_H,
             self.lineEdit_HM_M,
@@ -182,7 +183,7 @@ class Timer2(QMainWindow):
             case None:
                 return 0
 
-    def active_time_field(self, widget: QLineEdit | None = None) -> TimeField | None:
+    def active_time_field(self, widget: QLineEdit|None = None) -> TimeField | None:
         match widget:
             case None:
                 return self._active_time_field()
@@ -271,8 +272,8 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.aboutToQuit.connect(on_app_exit)
 
-    timer_2_app = Timer2()
-    sys.exit(timer_2_app.start())
+    timer_3_app = Timer_3()
+    sys.exit(timer_3_app.start())
 
 
 if __name__ == "__main__":

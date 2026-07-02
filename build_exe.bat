@@ -4,7 +4,7 @@ setlocal
 pushd "%~dp0"
 
 set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
-set "SPEC_FILE=%~dp0timer_2.spec"
+set "SPEC_FILE=%~dp0timer_3.spec"
 
 if not exist "%PYTHON_EXE%" (
     echo Python virtual environment was not found:
@@ -37,7 +37,7 @@ echo.
 echo Building executable...
 echo.
 
-"%PYTHON_EXE%" -m PyInstaller --clean timer_2.spec
+"%PYTHON_EXE%" -m PyInstaller --clean timer_3.spec
 
 set "EXIT_CODE=%ERRORLEVEL%"
 
@@ -45,7 +45,7 @@ echo.
 if "%EXIT_CODE%"=="0" (
     echo Build completed successfully.
     echo Executable:
-    echo dist\timer_2\timer_2.exe
+    echo dist\timer_3\timer_3.exe
 ) else (
     echo Build failed. Exit code: %EXIT_CODE%
 )
