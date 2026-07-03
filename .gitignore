@@ -33,7 +33,7 @@ Thumbs.db
 *.tmp
 .pytest_tmp/
 
-# Личные и рабосие файлы
+# Private and work files
 /*.json
 !/tunes.example.json
 

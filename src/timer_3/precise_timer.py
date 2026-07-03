@@ -4,6 +4,7 @@ from PyQt6.QtCore import QElapsedTimer, QTimer
 
 
 class PreciseTimer:
+    # noinspection GrazieInspectionRunner
     """Точный таймер. Похож на QTimer, но компенсирует накопленный дрейф."""
 
     def __init__(self, interval_ms: int, callback: Callable[[], None]) -> None:
@@ -15,6 +16,7 @@ class PreciseTimer:
         self.timer.setInterval(self.interval)
         self.timer.timeout.connect(self._on_timeout)
         self.tick_count = 0
+
 
     def start(self) -> None:
         self.elapsed.start()

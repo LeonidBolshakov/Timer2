@@ -58,4 +58,5 @@ class Const:
     TITLE_SELECT_MELODY = "Выбери файл мелодии"
 
     TYPES_FILE_MELODY = "*.mp3"
+    # noinspection GrazieInspection
     TYPES_FILE_TUNES = f"JSON файлы (*.{JSON})"
