@@ -7,7 +7,6 @@ from PyQt6.QtGui import QRegularExpressionValidator
 
 from . import functions as f
 from .const import Const as C
-from .tunes import TunesSettings
 from .timer_controller import Timer3Controller
 
 if TYPE_CHECKING:
@@ -18,23 +17,22 @@ class Timer3UiConfigurator:
     def __init__(self, window: Timer_3, controller: Timer3Controller) -> None:
         self.window = window
         self.controller = controller
-        self.settings = TunesSettings()
+        self.settings = controller.settings
+        self.validator_hour = QRegularExpressionValidator(
+            QRegularExpression(C.RE_PATTERN_0_24)
+        )
+        self.validator_min_sec = QRegularExpressionValidator(
+            QRegularExpression(C.RE_PATTERN_0_60)
+        )
         self.set_validators()
         self.connect_signals()
         self.init_vars()
 
     def set_validators(self) -> None:
-        validator_hour = QRegularExpressionValidator(
-            QRegularExpression(C.RE_PATTERN_0_24)
-        )
-        validator_min_sec = QRegularExpressionValidator(
-            QRegularExpression(C.RE_PATTERN_0_60)
-        )
-
-        self.window.lineEdit_HM_H.setValidator(validator_hour)
-        self.window.lineEdit_HM_M.setValidator(validator_min_sec)
-        self.window.lineEdit_MS_M.setValidator(validator_min_sec)
-        self.window.lineEdit_MS_S.setValidator(validator_min_sec)
+        self.window.lineEdit_HM_H.setValidator(self.validator_hour)
+        self.window.lineEdit_HM_M.setValidator(self.validator_min_sec)
+        self.window.lineEdit_MS_M.setValidator(self.validator_min_sec)
+        self.window.lineEdit_MS_S.setValidator(self.validator_min_sec)
 
     def connect_signals(self) -> None:
         self.window.btnQuit.clicked.connect(f.go_quit)
@@ -61,14 +59,24 @@ class Timer3UiConfigurator:
                 self.window.lineEdit_MS_S, self.window.btnStart
             )
         )
-        self.init_vars()
+        self.window.lineEditCycleIntervals.textEdited.connect(
+            self.controller.on_lineEditCycleIntervals_edited
+        )
+        self.window.checkboxEndlessly.stateChanged.connect(
+            self.controller.on_endlessly_changed
+        )
+
+        self.window.spinBoxCycleRepetitions.valueChanged.connect(
+            self.controller.on_cycle_repetitions_changed
+        )
 
     def init_vars(self) -> None:
         self.window.lblSec.setText("")
         if self.settings.model.restore_time:
-            self.initialize_time_fields()
+            self.initialize_tabOrdinary()
+            self.initialize_tabCycle()
 
-    def initialize_time_fields(self) -> None:
+    def initialize_tabOrdinary(self) -> None:
         model = self.settings.model
 
         if model.hm_h != 0 or model.hm_m != 0:
@@ -78,4 +86,8 @@ class Timer3UiConfigurator:
         if model.ms_m != 0 or model.ms_s != 0:
             self.window.lineEdit_MS_M.setText(str(model.ms_m))
             self.window.lineEdit_MS_S.setText(str(model.ms_s))
-        pass
+
+    def initialize_tabCycle(self) -> None:
+        model = self.settings.model
+
+        self.window.lineEditCycleIntervals.setText(model.cycle_intervals)

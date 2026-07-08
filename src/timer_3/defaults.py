@@ -1,12 +1,12 @@
-from .tunes_model import TunesModel
+from .model import Model
 
 
-def default_model() -> TunesModel:
+def default_model() -> Model:
     """
     Возвращает настройки программы по умолчанию.
     Это единственный источник значений по умолчанию.
     """
-    return TunesModel(
+    return Model(
         file_melody="_internal/default.mp3",
         voice_interval=10,
         beep_interval=3,
@@ -16,4 +16,10 @@ def default_model() -> TunesModel:
         hm_m=0,
         ms_m=0,
         ms_s=0,
+        cycle_intervals=list(),
+        cycle_repetitions=3,
+        endlessly=False,
+        current_interval=0,
+        interval_duration=0,
+        left=0,
     )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from enum import Enum
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QLineEdit,
     QWidget,
@@ -11,7 +12,7 @@ from PyQt6.QtWidgets import (
 from .clock import Clock
 from .const import Const as C
 from . import functions as f
-from .tune_key import TuneKey
+from .param_keys import ParamKeys
 from .tunes import TunesWindow
 from .inform import InformTime
 from .tunes import TunesSettings
@@ -25,6 +26,11 @@ class TimeField(Enum):
 
     HM = 1
     MS = 2
+
+
+# -----------------
+# ----- Обработчики событий виджетов окна "Timer"
+# ------------------
 
 
 class Timer3Controller:
@@ -61,27 +67,55 @@ class Timer3Controller:
             return
 
         self.tunes_window.refresh_ui()
-        self.tunes_window.show()
+        self.tunes_window.show_ui()
 
-    def draw_time(self, seconds_left: int) -> None:
-        hour, minutes, sec = f.hour_minutes_sec(seconds_left)
-
-        match self.active_time_field():
-            case TimeField.MS:
-                self.draw_min_sec(minutes, sec)
+    def on_line_edit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
+        match self.active_time_field(widget):
             case TimeField.HM:
-                self.draw_hour_min(hour, minutes, sec)
+                self.activate_widgets(
+                    self.window.lineEdit_HM_H,
+                    self.window.lineEdit_HM_M,
+                )
+                self.inaktivate_widgets(
+                    self.window.lineEdit_MS_M,
+                    self.window.lineEdit_MS_S,
+                )
+            case TimeField.MS:
+                self.activate_widgets(
+                    self.window.lineEdit_MS_M,
+                    self.window.lineEdit_MS_S,
+                )
+                self.inaktivate_widgets(
+                    self.window.lineEdit_HM_H,
+                    self.window.lineEdit_HM_M,
+                )
             case None:
-                pass
+                f.inform_fatal_error_and_quit(
+                    C.TITLE_INTERNAL_ERROR,
+                    C.TEXT_ERROR_UNKNOWN,
+                )
 
-    def draw_hour_min(self, hour: int, minutes: int, sec: int) -> None:
-        self.window.lineEdit_HM_H.setText(f"{hour:02}")
-        self.window.lineEdit_HM_M.setText(f"{minutes:02}")
-        self.window.lblSec.setText(f": {sec:02}")
+        self._commit_time_state_and_advance_focus(widget, focus)
 
-    def draw_min_sec(self, minutes: int, sec: int) -> None:
-        self.window.lineEdit_MS_M.setText(f"{minutes:02}")
-        self.window.lineEdit_MS_S.setText(f"{sec:02}")
+    def on_lineEditCycleIntervals_edited(self) -> None:
+        text = self.window.lineEditCycleIntervals.text()
+        # intervls формируется только для проверки
+        # метод возвращает text
+        intervals = f.cycle_intervals_list(text)
+
+        if not intervals:
+            f.error(self.window.lineEditCycleIntervals)
+
+        self.settings.set_value(ParamKeys.CYCLE_INTERVALS, text)
+
+    def on_endlessly_changed(self, state: int) -> None:
+        self.settings.set_value(
+            ParamKeys.CYCLE_ENDLESSLY,
+            state == Qt.CheckState.Checked.value,
+        )
+
+    def on_cycle_repetitions_changed(self, value: int) -> None:
+        self.settings.set_value(ParamKeys.CYCLE_REPETITIONS, value)
 
     def get_seconds_left(self) -> int:
         match self.active_time_field():
@@ -96,6 +130,21 @@ class Timer3Controller:
                 )
             case None:
                 return 0
+
+    # -----------------
+    # ----- Работа с полями времени в окне "Timer" (Обычный таймер)
+    # ------------------
+
+    def draw_time(self, seconds_left: int) -> None:
+        hour, minutes, sec = f.hour_minutes_sec(seconds_left)
+
+        match self.active_time_field():
+            case TimeField.MS:
+                self._draw_min_sec(minutes, sec)
+            case TimeField.HM:
+                self._draw_hour_min(hour, minutes, sec)
+            case None:
+                pass
 
     def active_time_field(self, widget: QLineEdit | None = None) -> TimeField | None:
         if widget is None:
@@ -112,11 +161,9 @@ class Timer3Controller:
         )
 
         if any(widget is field for field in hm_fields):
-            print("TimeField.HM")
             return TimeField.HM
 
         if any(widget is field for field in ms_fields):
-            print("TimeField.MS")
             return TimeField.MS
 
         f.inform_fatal_error_and_quit(
@@ -124,7 +171,18 @@ class Timer3Controller:
             f"{C.TEXT_ERROR_PARAM}\n{widget.objectName()=}",
         )
 
-        raise RuntimeError(f"Неизвестное поле ввода времени: {widget.objectName()}")
+    # -----------------
+    # ----- Helpers (Обычный таймер)
+    # ------------------
+
+    def _draw_hour_min(self, hour: int, minutes: int, sec: int) -> None:
+        self.window.lineEdit_HM_H.setText(f"{hour:02}")
+        self.window.lineEdit_HM_M.setText(f"{minutes:02}")
+        self.window.lblSec.setText(f": {sec:02}")
+
+    def _draw_min_sec(self, minutes: int, sec: int) -> None:
+        self.window.lineEdit_MS_M.setText(f"{minutes:02}")
+        self.window.lineEdit_MS_S.setText(f"{sec:02}")
 
     def _active_time_field(self) -> TimeField | None:
         if self.window.lineEdit_MS_M.text() or self.window.lineEdit_MS_S.text():
@@ -133,50 +191,30 @@ class Timer3Controller:
             return TimeField.HM
         return None
 
-    def on_line_edit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
-        match self.active_time_field(widget):
-            case TimeField.HM:
-                self.activate_inactivate_widgets(
-                    self.window.lineEdit_HM_H,
-                    self.window.lineEdit_HM_M,
-                    self.window.lineEdit_MS_M,
-                    self.window.lineEdit_MS_S,
-                )
-                self.window.lineEdit_MS_M.setText("")
-                self.window.lineEdit_MS_S.setText("")
-            case TimeField.MS:
-                self.activate_inactivate_widgets(
-                    self.window.lineEdit_MS_M,
-                    self.window.lineEdit_MS_S,
-                    self.window.lineEdit_HM_H,
-                    self.window.lineEdit_HM_M,
-                )
-                self.window.lineEdit_HM_H.setText("")
-                self.window.lineEdit_HM_M.setText("")
-            case None:
-                f.inform_fatal_error_and_quit(
-                    C.TITLE_INTERNAL_ERROR,
-                    C.TEXT_ERROR_UNKNOWN,
-                )
-
-        self.set_tunes_and_finish(widget, focus)
-
-    def set_tunes_and_finish(self, widget: QLineEdit, focus: QWidget) -> None:
-        self.put_int_tune(TuneKey.HM_H, self.window.lineEdit_HM_H.text())
-        self.put_int_tune(TuneKey.HM_M, self.window.lineEdit_HM_M.text())
-        self.put_int_tune(TuneKey.MS_M, self.window.lineEdit_MS_M.text())
-        self.put_int_tune(TuneKey.MS_S, self.window.lineEdit_MS_S.text())
+    def _commit_time_state_and_advance_focus(
+        self, widget: QLineEdit, next_focus: QWidget
+    ) -> None:
+        self._put_int_state(ParamKeys.HM_H, self.window.lineEdit_HM_H.text())
+        self._put_int_state(ParamKeys.HM_M, self.window.lineEdit_HM_M.text())
+        self._put_int_state(ParamKeys.MS_M, self.window.lineEdit_MS_M.text())
+        self._put_int_state(ParamKeys.MS_S, self.window.lineEdit_MS_S.text())
 
         if len(widget.text()) == 2:
-            focus.setFocus()
+            next_focus.setFocus()
 
-    def put_int_tune(self, key: TuneKey, value: str) -> None:
+    def _put_int_state(self, key: ParamKeys, value: str) -> None:
         self.settings.set_value(key, value if value else 0)
 
     @staticmethod
-    def activate_inactivate_widgets(
+    def activate_widgets(
         active_1: QLineEdit,
         active_2: QLineEdit,
+    ) -> None:
+        active_1.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
+        active_2.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
+
+    @staticmethod
+    def inaktivate_widgets(
         inactive_1: QLineEdit,
         inactive_2: QLineEdit,
     ) -> None:
@@ -184,5 +222,3 @@ class Timer3Controller:
         inactive_2.clear()
         inactive_1.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
         inactive_2.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
-        active_1.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
-        active_2.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)

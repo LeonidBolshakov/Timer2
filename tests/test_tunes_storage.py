@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from timer_3.tunes_mapper import default_dto, dto_to_json_dict
-from timer_3.tunes_storage import (
+from timer_3.mapper import default_dto, dto_to_json_dict
+from timer_3.storage import (
     ACTIVE_SETTINGS_FILE_NAME,
     ACTIVE_SETTINGS_KEY,
-    TunesStorage,
+    Storage,
 )
 
 
@@ -20,7 +20,7 @@ def isolated_appdata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_load_missing_user_file_returns_defaults_and_creates_file() -> None:
-    storage = TunesStorage()
+    storage = Storage()
 
     dto = storage.load()
 
@@ -35,7 +35,7 @@ def test_load_missing_user_file_returns_defaults_and_creates_file() -> None:
 
 
 def test_save_writes_current_settings_file() -> None:
-    storage = TunesStorage()
+    storage = Storage()
     dto = default_dto()
     dto.voice_interval = 22
 
@@ -47,18 +47,18 @@ def test_save_writes_current_settings_file() -> None:
 
 
 def test_load_existing_valid_settings_file() -> None:
-    storage = TunesStorage()
+    storage = Storage()
     dto = default_dto()
     dto.beep_interval = 7
     storage.save(dto)
 
-    reloaded = TunesStorage().load()
+    reloaded = Storage().load()
 
     assert reloaded.beep_interval == 7
 
 
 def test_load_invalid_json_returns_defaults_and_warning() -> None:
-    storage = TunesStorage()
+    storage = Storage()
     storage.settings_file.parent.mkdir(parents=True, exist_ok=True)
     storage.settings_file.write_text("{broken json", encoding="utf-8")
 
@@ -69,7 +69,7 @@ def test_load_invalid_json_returns_defaults_and_warning() -> None:
 
 
 def test_load_non_dict_json_returns_defaults_and_warning() -> None:
-    storage = TunesStorage()
+    storage = Storage()
     storage.settings_file.parent.mkdir(parents=True, exist_ok=True)
     storage.settings_file.write_text("[]", encoding="utf-8")
 
@@ -84,7 +84,7 @@ def test_load_non_dict_json_returns_defaults_and_warning() -> None:
 def test_switch_settings_file_updates_registry_and_saves_selected_file(
     tmp_path: Path,
 ) -> None:
-    storage = TunesStorage()
+    storage = Storage()
     new_settings_file = tmp_path / "custom" / "profile.json"
 
     dto = storage.switch_settings_file(new_settings_file)
@@ -105,6 +105,6 @@ def test_broken_active_registry_falls_back_to_default(
     app_dir.mkdir(parents=True)
     (app_dir / ACTIVE_SETTINGS_FILE_NAME).write_text("[]", encoding="utf-8")
 
-    storage = TunesStorage()
+    storage = Storage()
 
     assert storage.settings_file.name == "user.json"

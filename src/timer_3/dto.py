@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(slots=True)
-class TunesDTO:
+class DTO:
     """JSON-представление настроек. Только простые JSON-типы."""
 
     version: int
@@ -15,3 +15,10 @@ class TunesDTO:
     hm_m: int
     ms_m: int
     ms_s: int
+    cycle_intervals: str
+    cycle_repetitions: int
+    endlessly: bool
+
+    current_interval: int
+    interval_duration: int
+    left: int

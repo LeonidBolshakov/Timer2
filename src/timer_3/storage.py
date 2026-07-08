@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .tunes_dto import TunesDTO
-from .tunes_mapper import default_dto, dto_to_json_dict, json_dict_to_dto
+from .dto import DTO
+from .mapper import default_dto, dto_to_json_dict, json_dict_to_dto
 
 PROGRAM_NAME = "Timer_3"
 
@@ -15,7 +15,7 @@ ACTIVE_SETTINGS_KEY = "active_settings_file"
 USER_PROFILE_FILE_NAME = "user.json"
 
 
-class TunesStorage:
+class Storage:
     """
     Файловое хранилище настроек.
 
@@ -33,7 +33,7 @@ class TunesStorage:
     # Публичные методы
     # ------------------------------------------------------------------
 
-    def load(self) -> TunesDTO:
+    def load(self) -> DTO:
         """
         Загружает активный файл настроек.
 
@@ -47,7 +47,7 @@ class TunesStorage:
 
         return dto
 
-    def save(self, dto: TunesDTO) -> None:
+    def save(self, dto: DTO) -> None:
         """
         Сохраняет настройки в текущий активный файл.
         """
@@ -59,7 +59,7 @@ class TunesStorage:
                 "но могут быть потеряны после перезапуска."
             )
 
-    def switch_settings_file(self, settings_file: Path) -> TunesDTO:
+    def switch_settings_file(self, settings_file: Path) -> DTO:
         """
         Переключает активный файл настроек.
 
@@ -163,7 +163,7 @@ class TunesStorage:
     # Запись файлов
     # ------------------------------------------------------------------
 
-    def _write_dto_to_file(self, path: Path, dto: TunesDTO) -> bool:
+    def _write_dto_to_file(self, path: Path, dto: DTO) -> bool:
         """
         Записывает DTO в файл.
 
@@ -217,7 +217,7 @@ class TunesStorage:
     # Чтение файлов
     # ------------------------------------------------------------------
 
-    def _load_from_file(self, settings_file: Path) -> TunesDTO:
+    def _load_from_file(self, settings_file: Path) -> DTO:
         """
         Загружает настройки из указанного файла.
 

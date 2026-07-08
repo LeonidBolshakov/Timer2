@@ -14,6 +14,7 @@ class Const:
     FORMS_SECUNDA = ["секунд", "секунда", "секунды"]
     GENDER_F = "f"
     GENDER_M = "m"
+    CYCLE_SEPARATOTS = r"[\s,;\\.]+"
     INACTIVE_FIELD_BG_COLOR = "QLineEdit { background-color: white; }"
     JSON = "json"
     LANG_RU = "ru"
@@ -24,10 +25,13 @@ class Const:
     SECONDS_IN_HOUR = 3600
     SECONDS_IN_MINUTE = 60
 
+    TEXT_ERROR_BOOL = "Логическое значение нельзя использовать как число"
     TEXT_ERROR_CALLBACK = "Класс Clock. Неверно указана функция callback - "
+    TEXT_ERROR_CYCLE_INTERVALS = "Пременная CYCLE_INTERVALS имеет тип отличный от str"
     TEXT_ERROR_NAME_CALLBACK = (
         "Класс Clock. Функция callback регистрируется повторно - "
     )
+    TEXT_ERROR_NO_INT = "Нельзя преобразовать в int: "
     TEXT_ERROR_PARAM = (
         "методу timer_3.active_time_field передан непредусмотренный параметр widget."
     )

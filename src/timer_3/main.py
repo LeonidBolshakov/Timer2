@@ -11,17 +11,19 @@ from PyQt6 import uic  # type: ignore
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
-)
-from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QTabWidget,
+    QWidget,
+    QCheckBox,
+    QSpinBox,
 )
 
 
 from .const import Const as C
 from . import functions as f
-from .ui_configurator import Timer3UiConfigurator
+from .timer_configurator import Timer3UiConfigurator
 from .timer_controller import Timer3Controller
 
 
@@ -31,11 +33,23 @@ class Timer_3(QMainWindow):
     btnQuit: QPushButton
     btnStart: QPushButton
     btnTunes: QPushButton
+    checkboxEndlessly: QCheckBox
     lblSec: QLabel
+    lineEditCurrentInterval: QLineEdit
+    lineEditCycleIntervals: QLineEdit
+    lineEditIntervalDuration: QLineEdit
+    lineEditLeft: QLineEdit
     lineEdit_HM_H: QLineEdit
     lineEdit_HM_M: QLineEdit
     lineEdit_MS_M: QLineEdit
     lineEdit_MS_S: QLineEdit
+    spinBoxCycleRepetitions: QSpinBox
+    tabCycle: QWidget
+    tabOrdinary: QWidget
+    tabWidgetSetTime: QTabWidget
+
+    controller: Timer3Controller
+    ui_configurator: Timer3UiConfigurator
 
     def __init__(self) -> None:
         super().__init__(None)
