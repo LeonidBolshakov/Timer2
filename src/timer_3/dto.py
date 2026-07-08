@@ -17,8 +17,8 @@ class DTO:
     ms_s: int
     cycle_intervals: str
     cycle_repetitions: int
-    endlessly: bool
+    cycle_endlessly: bool
 
     current_interval: int
     interval_duration: int
-    left: int
+    cycle_left: int

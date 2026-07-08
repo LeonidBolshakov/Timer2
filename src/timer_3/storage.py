@@ -25,8 +25,16 @@ class Storage:
     - active_settings.json — служебный указатель на активный файл настроек.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, app_dir: Path | None = None) -> None:
         self.warnings: list[str] = []
+
+        self._app_dir_path = (
+            app_dir.expanduser().resolve()
+            if app_dir is not None
+            else self._default_app_dir()
+        )
+        self._app_dir_path.mkdir(parents=True, exist_ok=True)
+
         self.settings_file = self._load_active_settings_file()
 
     # ------------------------------------------------------------------
@@ -40,8 +48,20 @@ class Storage:
         Если активный файл отсутствует, недоступен или повреждён,
         используются настройки по умолчанию.
 
-        Предупреждения для пользователя накапливаются в self.warnings.
+        Если активный путь оказался каталогом или другим не-файлом,
+        активным файлом становится profiles/user.json.
         """
+        safe_settings_file = self._safe_settings_file(self.settings_file)
+
+        if safe_settings_file is None:
+            self.settings_file = self._user_settings_file()
+            dto = default_dto()
+            self.save(dto)
+            self._save_active_settings_file(self.settings_file)
+            return dto
+
+        self.settings_file = safe_settings_file
+
         dto = self._load_from_file(self.settings_file)
         self.save(dto)
 
@@ -63,11 +83,18 @@ class Storage:
         """
         Переключает активный файл настроек.
 
-        Если выбранный файл отсутствует, недоступен или повреждён,
-        используются настройки по умолчанию, а предупреждение
-        передаётся UI-слою через self.warnings.
+        Если выбранный путь является каталогом или другим не-файлом,
+        переключение не выполняется.
+
+        Если выбранный файл отсутствует, он будет создан с настройками
+        по умолчанию.
         """
-        new_file = settings_file.expanduser().resolve()
+        new_file = self._safe_settings_file(settings_file)
+
+        if new_file is None:
+            dto = self._load_from_file(self.settings_file)
+            self.save(dto)
+            return dto
 
         dto = self._load_from_file(new_file)
 
@@ -89,32 +116,60 @@ class Storage:
     # Пути
     # ------------------------------------------------------------------
 
-    @classmethod
-    def _app_dir(cls) -> Path:
+    @staticmethod
+    def _default_app_dir() -> Path:
         base_dir = Path(os.getenv("APPDATA", Path.home()))
-        app_dir = base_dir / PROGRAM_NAME
-        app_dir.mkdir(parents=True, exist_ok=True)
-        return app_dir
+        return (base_dir / PROGRAM_NAME).expanduser().resolve()
 
-    @classmethod
-    def _profiles_dir(cls) -> Path:
-        profiles_dir = cls._app_dir() / "profiles"
+    def _app_dir(self) -> Path:
+        self._app_dir_path.mkdir(parents=True, exist_ok=True)
+        return self._app_dir_path
+
+    def _profiles_dir(self) -> Path:
+        profiles_dir = self._app_dir() / "profiles"
         profiles_dir.mkdir(parents=True, exist_ok=True)
         return profiles_dir
 
-    @classmethod
-    def _registry_file(cls) -> Path:
-        return cls._app_dir() / ACTIVE_SETTINGS_FILE_NAME
+    def _registry_file(self) -> Path:
+        return self._app_dir() / ACTIVE_SETTINGS_FILE_NAME
 
-    @classmethod
-    def _user_settings_file(cls) -> Path:
+    def _user_settings_file(self) -> Path:
         """
         Основной рабочий файл пользователя.
 
         Это не файл заводских настроек.
         Это обычный изменяемый файл настроек.
         """
-        return cls._profiles_dir() / USER_PROFILE_FILE_NAME
+        return self._profiles_dir() / USER_PROFILE_FILE_NAME
+
+    def _safe_settings_file(self, path: Path) -> Path | None:
+        """
+        Нормализует путь к файлу настроек.
+
+        Возвращает:
+            Path — путь отсутствует или является файлом;
+            None — путь существует, но не является файлом.
+        """
+        try:
+            normalized_path = path.expanduser().resolve()
+        except (OSError, RuntimeError) as err:
+            self.warnings.append(
+                "Некорректный путь к файлу настроек.\n"
+                f"Путь: {path}\n"
+                f"Причина: {err}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        if normalized_path.exists() and not normalized_path.is_file():
+            self.warnings.append(
+                "Путь настроек не является файлом.\n"
+                f"Путь: {normalized_path}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        return normalized_path
 
     # ------------------------------------------------------------------
     # Загрузка active_settings.json
@@ -124,29 +179,50 @@ class Storage:
         """
         Загружает путь к активному файлу настроек из active_settings.json.
 
-        Если служебный файл отсутствует, повреждён или не содержит путь,
-        возвращает путь к user.json.
-
-        Важно:
-        существование самого активного файла здесь не проверяется.
-        Это делает load().
+        Если служебный файл отсутствует, повреждён, не содержит путь
+        или содержит путь к каталогу, возвращает путь к user.json.
         """
         registry_file = self._registry_file()
 
         if not registry_file.exists():
             return self._user_settings_file()
 
+        if not registry_file.is_file():
+            self.warnings.append(
+                "Путь служебного файла настроек не является файлом.\n"
+                f"Путь: {registry_file}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return self._user_settings_file()
+
         try:
             text = registry_file.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        except (OSError, UnicodeDecodeError) as err:
+            self.warnings.append(
+                "Служебный файл настроек недоступен.\n"
+                f"Файл: {registry_file}\n"
+                f"Причина: {err}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
             return self._user_settings_file()
 
         try:
             data = json.loads(text)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as err:
+            self.warnings.append(
+                "Служебный файл настроек повреждён.\n"
+                f"Файл: {registry_file}\n"
+                f"Причина: {err}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
             return self._user_settings_file()
 
         if not isinstance(data, dict):
+            self.warnings.append(
+                "Служебный файл настроек содержит некорректную структуру.\n"
+                f"Файл: {registry_file}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
             return self._user_settings_file()
 
         value = data.get(ACTIVE_SETTINGS_KEY)
@@ -154,10 +230,12 @@ class Storage:
         if not isinstance(value, str) or not value.strip():
             return self._user_settings_file()
 
-        try:
-            return Path(value).expanduser().resolve()
-        except (OSError, RuntimeError):
+        active_file = self._safe_settings_file(Path(value))
+
+        if active_file is None:
             return self._user_settings_file()
+
+        return active_file
 
     # ------------------------------------------------------------------
     # Запись файлов
@@ -177,11 +255,11 @@ class Storage:
         Сохраняет путь к активному файлу настроек в active_settings.json.
         """
         registry_file = self._registry_file()
-        registry_file.parent.mkdir(parents=True, exist_ok=True)
 
         data: dict[str, Any] = {
             ACTIVE_SETTINGS_KEY: str(settings_file.expanduser().resolve())
         }
+
         if not self._write_json_file(data, registry_file):
             self.warnings.append(
                 "Не удалось сохранить указатель активного файла настроек.\n"
@@ -204,8 +282,13 @@ class Storage:
             False — файл не удалось записать.
         """
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(
+            safe_path = self._safe_settings_file(path)
+
+            if safe_path is None:
+                return False
+
+            safe_path.parent.mkdir(parents=True, exist_ok=True)
+            safe_path.write_text(
                 json.dumps(data, ensure_ascii=False, indent=4),
                 encoding="utf-8",
             )
@@ -226,19 +309,22 @@ class Storage:
         - добавляет предупреждение в self.warnings;
         - возвращает DTO по умолчанию.
         """
-        path = settings_file.expanduser().resolve()
+        safe_settings_file = self._safe_settings_file(settings_file)
 
-        if not self._is_readable_settings_file(path):
+        if safe_settings_file is None:
+            return default_dto()
+
+        if not self._is_readable_settings_file(safe_settings_file):
             return default_dto()
 
         try:
-            raw_data = json.loads(path.read_text(encoding="utf-8"))
+            raw_data = json.loads(safe_settings_file.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError) as err:
-            self._warn_bad_settings_file(path, err)
+            self._warn_bad_settings_file(safe_settings_file, err)
             return default_dto()
 
         if not isinstance(raw_data, dict):
-            self._warn_invalid_settings_structure(path)
+            self._warn_invalid_settings_structure(safe_settings_file)
             return default_dto()
 
         return json_dict_to_dto(raw_data)
@@ -246,7 +332,9 @@ class Storage:
     def _is_readable_settings_file(self, path: Path) -> bool:
         """
         Проверяет, что путь существует и является файлом.
-        При ошибке добавляет предупреждение.
+
+        Если файл отсутствует, это не фатальная ошибка:
+        при следующем save() будет создан файл с настройками по умолчанию.
         """
         if not path.exists():
             self.warnings.append(

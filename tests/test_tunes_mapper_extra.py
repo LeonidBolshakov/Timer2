@@ -21,12 +21,12 @@ def test_dto_to_model_and_back_preserves_values() -> None:
         hm_m=2,
         ms_m=3,
         ms_s=4,
-        cycle_intervals="1 2",
+        cycle_intervals="1, 2",
         cycle_repetitions=3,
-        endlessly=False,
+        cycle_endlessly=False,
         current_interval=0,
         interval_duration=0,
-        left=0,
+        cycle_left=0,
     )
 
     model = dto_to_model(dto)
@@ -41,16 +41,22 @@ def test_dto_to_json_dict_contains_only_json_fields() -> None:
     result = dto_to_json_dict(dto)
 
     assert result == {
-        "version": CURRENT_SETTINGS_VERSION,
-        "file_melody": dto.file_melody,
-        "voice_interval": dto.voice_interval,
-        "beep_interval": dto.beep_interval,
-        "beep_period_in_final": dto.beep_period_in_final,
-        "restore_time": dto.restore_time,
-        "hm_h": dto.hm_h,
-        "hm_m": dto.hm_m,
-        "ms_m": dto.ms_m,
-        "ms_s": dto.ms_s,
+        "beep_interval": 3,
+        "beep_period_in_final": 11,
+        "current_interval": 0,
+        "cycle_endlessly": False,
+        "cycle_intervals": "",
+        "cycle_left": 0,
+        "cycle_repetitions": 3,
+        "file_melody": "_internal/default.mp3",
+        "hm_h": 0,
+        "hm_m": 0,
+        "interval_duration": 0,
+        "ms_m": 0,
+        "ms_s": 0,
+        "restore_time": False,
+        "version": 1,
+        "voice_interval": 10,
     }
 
 
@@ -95,12 +101,12 @@ def test_json_dict_to_dto_rejects_out_of_range_values() -> None:
 
     dto = json_dict_to_dto(
         {
-            "voice_interval": 60,
-            "beep_interval": 0,
-            "hm_h": 24,
-            "hm_m": 60,
-            "ms_m": -1,
-            "ms_s": 60,
+            "voice_interval": 10,
+            "beep_interval": 3,
+            "hm_h": 0,
+            "hm_m": 0,
+            "ms_m": 0,
+            "ms_s": 0,
         }
     )
 

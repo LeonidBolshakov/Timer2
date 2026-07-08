@@ -13,4 +13,4 @@ def test_tune_key_values_are_stable() -> None:
 def test_tune_keys_exists_in_dto() -> None:
     dto_fields = {field.name for field in fields(DTO)}
     tune_keys = {key.value for key in ParamKeys}
-    assert dto_fields <= tune_keys
+    assert tune_keys <= dto_fields

@@ -31,4 +31,16 @@ def test_invalid_values_are_replaced_by_defaults() -> None:
 
     assert dto.voice_interval == defaults.voice_interval
     assert dto.beep_interval == defaults.beep_interval
-    assert dto.restore_time is True
+    assert dto.restore_time == defaults.restore_time
+
+
+def test_cycle_fields_are_loaded_from_new_names() -> None:
+    dto = json_dict_to_dto(
+        {
+            "cycle_endlessly": True,
+            "cycle_left": 7,
+        }
+    )
+
+    assert dto.cycle_endlessly is True
+    assert dto.cycle_left == 7

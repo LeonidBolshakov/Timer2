@@ -19,18 +19,21 @@ def isolated_appdata(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-def test_load_missing_user_file_returns_defaults_and_creates_file() -> None:
-    storage = Storage()
+def test_load_missing_user_file_returns_defaults_and_creates_file(
+    tmp_path: Path,
+) -> None:
+    storage = Storage(app_dir=tmp_path)
 
     dto = storage.load()
 
     assert dto == default_dto()
     assert storage.settings_file.exists()
+    assert storage.settings_file.is_file()
 
     saved_text = storage.settings_file.read_text(encoding="utf-8")
     saved_data = json.loads(saved_text)
-    assert saved_data == dto_to_json_dict(default_dto())
 
+    assert saved_data == dto_to_json_dict(default_dto())
     assert storage.pop_warnings()
 
 
