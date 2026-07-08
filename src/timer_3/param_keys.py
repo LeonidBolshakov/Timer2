@@ -15,6 +15,7 @@ class ParamKeys(StrEnum):
     MS_M = "ms_m"
     MS_S = "ms_s"
 
+    ACTIVE_TAB_IN_QTABWIDGET = "active_tab_in_QTabWidget"
     CYCLE_INTERVALS = "cycle_intervals"
     CYCLE_REPETITIONS = "cycle_repetitions"
     CYCLE_ENDLESSLY = "cycle_endlessly"

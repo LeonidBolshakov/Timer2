@@ -27,7 +27,6 @@ class TunesSettings:
     def __init__(self) -> None:
         self.storage = Storage()
         self.model: Model = dto_to_model(self.storage.load())
-        pass
 
     @property
     def settings_file(self) -> Path:

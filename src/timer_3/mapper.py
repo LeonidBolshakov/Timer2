@@ -22,6 +22,7 @@ def dto_to_model(dto: DTO) -> Model:
         hm_m=dto.hm_m,
         ms_m=dto.ms_m,
         ms_s=dto.ms_s,
+        active_tab_in_QTabWidget=dto.active_tab_in_QTabWidget,
         cycle_intervals=f.cycle_intervals_list(dto.cycle_intervals),
         cycle_repetitions=dto.cycle_repetitions,
         endlessly=dto.cycle_endlessly,
@@ -50,6 +51,7 @@ def model_to_dto(model: Model) -> DTO:
         hm_m=model.hm_m,
         ms_m=model.ms_m,
         ms_s=model.ms_s,
+        active_tab_in_QTabWidget=model.active_tab_in_QTabWidget,
         cycle_intervals=f.cycle_intervals_to_display(model.cycle_intervals),
         cycle_repetitions=model.cycle_repetitions,
         cycle_endlessly=model.endlessly,
@@ -88,14 +90,12 @@ def json_dict_to_dto(data: object) -> DTO:
         default_value = getattr(defaults, name)
         value = raw(name)
 
-        if not isinstance(value, int):
-            return default_value
-        if isinstance(value, bool):
+        if not isinstance(value, int | str) or isinstance(value, bool):
             return default_value
 
         try:
             result = int(value)
-        except (TypeError, ValueError):
+        except ValueError:
             return default_value
 
         if min_value is not None and result < min_value:
@@ -163,6 +163,7 @@ def json_dict_to_dto(data: object) -> DTO:
             min_value=0,
             max_value=59,
         ),
+        active_tab_in_QTabWidget=int_or_default("active_tab_in_QTabWidget"),
         cycle_intervals=str_or_default("cycle_intervals"),
         cycle_repetitions=int_or_default(
             "cycle_repetitions",

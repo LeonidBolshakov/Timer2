@@ -36,13 +36,14 @@ class TimeField(Enum):
 class Timer3Controller:
     def __init__(self, window: Timer_3) -> None:
         self.window = window
+        self.active_tab_in_QTabWidget = 0
         self.clock: Clock | None = None
         self.tunes_window: TunesWindow | None = None
         self.settings = TunesSettings()
         self.inform_time = InformTime(self.settings)
 
     def on_btn_start_click(self) -> None:
-        seconds_left = self.get_seconds_left()
+        seconds_left = self._get_seconds_left()
         if self.clock is not None or seconds_left <= 0:
             f.beep()
             return
@@ -72,20 +73,20 @@ class Timer3Controller:
     def on_line_edit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
         match self.active_time_field(widget):
             case TimeField.HM:
-                self.activate_widgets(
+                self._activate_widgets(
                     self.window.lineEdit_HM_H,
                     self.window.lineEdit_HM_M,
                 )
-                self.inaktivate_widgets(
+                self._inaktivate_widgets(
                     self.window.lineEdit_MS_M,
                     self.window.lineEdit_MS_S,
                 )
             case TimeField.MS:
-                self.activate_widgets(
+                self._activate_widgets(
                     self.window.lineEdit_MS_M,
                     self.window.lineEdit_MS_S,
                 )
-                self.inaktivate_widgets(
+                self._inaktivate_widgets(
                     self.window.lineEdit_HM_H,
                     self.window.lineEdit_HM_M,
                 )
@@ -115,19 +116,8 @@ class Timer3Controller:
     def on_cycle_repetitions_changed(self, value: int) -> None:
         self.settings.set_value(ParamKeys.CYCLE_REPETITIONS, value)
 
-    def get_seconds_left(self) -> int:
-        match self.active_time_field():
-            case TimeField.MS:
-                return f.num(self.window.lineEdit_MS_M) * C.SECONDS_IN_MINUTE + f.num(
-                    self.window.lineEdit_MS_S
-                )
-            case TimeField.HM:
-                return (
-                    f.num(self.window.lineEdit_HM_H) * C.SECONDS_IN_HOUR
-                    + f.num(self.window.lineEdit_HM_M) * C.SECONDS_IN_MINUTE
-                )
-            case None:
-                return 0
+    def on_QTabWidget_changed(self, index: int) -> None:
+        self.settings.set_value(ParamKeys.ACTIVE_TAB_IN_QTABWIDGET, index)
 
     # -----------------
     # ----- Работа с полями времени в окне "Timer" (Обычный таймер)
@@ -204,7 +194,7 @@ class Timer3Controller:
         self.settings.set_value(key, value if value else 0)
 
     @staticmethod
-    def activate_widgets(
+    def _activate_widgets(
         active_1: QLineEdit,
         active_2: QLineEdit,
     ) -> None:
@@ -212,7 +202,7 @@ class Timer3Controller:
         active_2.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
 
     @staticmethod
-    def inaktivate_widgets(
+    def _inaktivate_widgets(
         inactive_1: QLineEdit,
         inactive_2: QLineEdit,
     ) -> None:
@@ -220,3 +210,17 @@ class Timer3Controller:
         inactive_2.clear()
         inactive_1.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
         inactive_2.setStyleSheet(C.INACTIVE_FIELD_BG_COLOR)
+
+    def _get_seconds_left(self) -> int:
+        match self.active_time_field():
+            case TimeField.MS:
+                return f.num(self.window.lineEdit_MS_M) * C.SECONDS_IN_MINUTE + f.num(
+                    self.window.lineEdit_MS_S
+                )
+            case TimeField.HM:
+                return (
+                    f.num(self.window.lineEdit_HM_H) * C.SECONDS_IN_HOUR
+                    + f.num(self.window.lineEdit_HM_M) * C.SECONDS_IN_MINUTE
+                )
+            case None:
+                return 0

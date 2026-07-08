@@ -19,6 +19,7 @@ class Model:
     hm_m: int
     ms_m: int
     ms_s: int
+    active_tab_in_QTabWidget: int
     cycle_intervals: list[int]
     cycle_repetitions: int
     endlessly: bool
@@ -79,6 +80,9 @@ class Model:
 
             case ParamKeys.CYCLE_REPETITIONS:
                 self.cycle_repetitions = f._to_int(value)
+
+            case ParamKeys.ACTIVE_TAB_IN_QTABWIDGET:
+                self.active_tab_in_QTabWidget = f._to_int(value)
 
             case _:
                 f.inform_fatal_error_and_quit(

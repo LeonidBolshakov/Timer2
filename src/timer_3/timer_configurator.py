@@ -69,12 +69,21 @@ class Timer3UiConfigurator:
         self.window.spinBoxCycleRepetitions.valueChanged.connect(
             self.controller.on_cycle_repetitions_changed
         )
+        self.window.tabWidgetSetTime.currentChanged.connect(
+            self.controller.on_QTabWidget_changed
+        )
 
     def init_vars(self) -> None:
         self.window.lblSec.setText("")
         if self.settings.model.restore_time:
+            self.initialize_current_tab()
             self.initialize_tabOrdinary()
             self.initialize_tabCycle()
+
+    def initialize_current_tab(self) -> None:
+        model = self.settings.model
+
+        self.window.tabWidgetSetTime.setCurrentIndex(model.active_tab_in_QTabWidget)
 
     def initialize_tabOrdinary(self) -> None:
         model = self.settings.model

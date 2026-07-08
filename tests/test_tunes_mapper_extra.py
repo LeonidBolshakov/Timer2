@@ -21,6 +21,7 @@ def test_dto_to_model_and_back_preserves_values() -> None:
         hm_m=2,
         ms_m=3,
         ms_s=4,
+        active_tab_in_QTabWidget=0,
         cycle_intervals="1, 2",
         cycle_repetitions=3,
         cycle_endlessly=False,
@@ -57,6 +58,7 @@ def test_dto_to_json_dict_contains_only_json_fields() -> None:
         "restore_time": False,
         "version": 1,
         "voice_interval": 10,
+        "active_tab_in_QTabWidget": 0,
     }
 
 
