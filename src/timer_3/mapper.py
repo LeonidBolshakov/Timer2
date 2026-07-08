@@ -88,6 +88,8 @@ def json_dict_to_dto(data: object) -> DTO:
         default_value = getattr(defaults, name)
         value = raw(name)
 
+        if not isinstance(value, int):
+            return default_value
         if isinstance(value, bool):
             return default_value
 

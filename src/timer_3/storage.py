@@ -182,55 +182,12 @@ class Storage:
         Если служебный файл отсутствует, повреждён, не содержит путь
         или содержит путь к каталогу, возвращает путь к user.json.
         """
-        registry_file = self._registry_file()
+        data = self._load_active_settings_data()
 
-        if not registry_file.exists():
+        if data is None:
             return self._user_settings_file()
 
-        if not registry_file.is_file():
-            self.warnings.append(
-                "Путь служебного файла настроек не является файлом.\n"
-                f"Путь: {registry_file}\n"
-                "Будет использован основной файл настроек пользователя."
-            )
-            return self._user_settings_file()
-
-        try:
-            text = registry_file.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError) as err:
-            self.warnings.append(
-                "Служебный файл настроек недоступен.\n"
-                f"Файл: {registry_file}\n"
-                f"Причина: {err}\n"
-                "Будет использован основной файл настроек пользователя."
-            )
-            return self._user_settings_file()
-
-        try:
-            data = json.loads(text)
-        except json.JSONDecodeError as err:
-            self.warnings.append(
-                "Служебный файл настроек повреждён.\n"
-                f"Файл: {registry_file}\n"
-                f"Причина: {err}\n"
-                "Будет использован основной файл настроек пользователя."
-            )
-            return self._user_settings_file()
-
-        if not isinstance(data, dict):
-            self.warnings.append(
-                "Служебный файл настроек содержит некорректную структуру.\n"
-                f"Файл: {registry_file}\n"
-                "Будет использован основной файл настроек пользователя."
-            )
-            return self._user_settings_file()
-
-        value = data.get(ACTIVE_SETTINGS_KEY)
-
-        if not isinstance(value, str) or not value.strip():
-            return self._user_settings_file()
-
-        active_file = self._safe_settings_file(Path(value))
+        active_file = self._get_active_file_from_data(data)
 
         if active_file is None:
             return self._user_settings_file()
@@ -297,7 +254,7 @@ class Storage:
             return False
 
     # ------------------------------------------------------------------
-    # Чтение файлов
+    # Helpers
     # ------------------------------------------------------------------
 
     def _load_from_file(self, settings_file: Path) -> DTO:
@@ -374,3 +331,57 @@ class Storage:
             f"Файл: {path}\n"
             "Будут использованы настройки по умолчанию."
         )
+
+    def _load_active_settings_data(self) -> dict[str, Any] | None:
+        registry_file = self._registry_file()
+
+        if not registry_file.exists():
+            return None
+
+        if not registry_file.is_file():
+            self.warnings.append(
+                "Путь служебного файла настроек не является файлом.\n"
+                f"Путь: {registry_file}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        try:
+            text = registry_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as err:
+            self.warnings.append(
+                "Служебный файл настроек недоступен.\n"
+                f"Файл: {registry_file}\n"
+                f"Причина: {err}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as err:
+            self.warnings.append(
+                "Служебный файл настроек повреждён.\n"
+                f"Файл: {registry_file}\n"
+                f"Причина: {err}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        if not isinstance(data, dict):
+            self.warnings.append(
+                "Служебный файл настроек содержит некорректную структуру.\n"
+                f"Файл: {registry_file}\n"
+                "Будет использован основной файл настроек пользователя."
+            )
+            return None
+
+        return data
+
+    def _get_active_file_from_data(self, data: dict[str, Any]) -> Path | None:
+        value = data.get(ACTIVE_SETTINGS_KEY)
+
+        if not isinstance(value, str) or not value.strip():
+            return None
+
+        return self._safe_settings_file(Path(value))
