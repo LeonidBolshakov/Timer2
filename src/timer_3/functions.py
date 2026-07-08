@@ -209,3 +209,7 @@ def _to_str(
         C.TITLE_INTERNAL_ERROR,
         f"Функция _to_str. Неверный тип переменной\n" f" - {type(value).__name__}",
     )
+
+
+def cycle_intervals_to_display(cycle_intervals: list[int]) -> str:
+    return str(cycle_intervals)[1:-1]

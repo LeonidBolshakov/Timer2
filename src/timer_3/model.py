@@ -68,7 +68,7 @@ class Model:
                 self.ms_s = f._to_int(value, min_value=0, max_value=59)
 
             case ParamKeys.CYCLE_INTERVALS:
-                if not isinstance(value, str):
+                if not isinstance(value, list):
                     f.inform_fatal_error_and_quit(
                         C.TITLE_INTERNAL_ERROR, C.TEXT_ERROR_CYCLE_INTERVALS
                     )

@@ -90,4 +90,6 @@ class Timer3UiConfigurator:
     def initialize_tabCycle(self) -> None:
         model = self.settings.model
 
-        self.window.lineEditCycleIntervals.setText(model.cycle_intervals)
+        self.window.lineEditCycleIntervals.setText(
+            f.cycle_intervals_to_display(model.cycle_intervals)
+        )

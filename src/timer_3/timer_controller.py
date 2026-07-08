@@ -99,14 +99,12 @@ class Timer3Controller:
 
     def on_lineEditCycleIntervals_edited(self) -> None:
         text = self.window.lineEditCycleIntervals.text()
-        # intervls формируется только для проверки
-        # метод возвращает text
         intervals = f.cycle_intervals_list(text)
 
         if not intervals:
             f.error(self.window.lineEditCycleIntervals)
 
-        self.settings.set_value(ParamKeys.CYCLE_INTERVALS, text)
+        self.settings.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
 
     def on_endlessly_changed(self, state: int) -> None:
         self.settings.set_value(

@@ -27,7 +27,7 @@ class Const:
 
     TEXT_ERROR_BOOL = "Логическое значение нельзя использовать как число"
     TEXT_ERROR_CALLBACK = "Класс Clock. Неверно указана функция callback - "
-    TEXT_ERROR_CYCLE_INTERVALS = "Пременная CYCLE_INTERVALS имеет тип отличный от str"
+    TEXT_ERROR_CYCLE_INTERVALS = "Пременная CYCLE_INTERVALS имеет тип отличный от list"
     TEXT_ERROR_NAME_CALLBACK = (
         "Класс Clock. Функция callback регистрируется повторно - "
     )
