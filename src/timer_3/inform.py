@@ -72,7 +72,7 @@ class InformTime:
 
             self.voice_lock.release()
 
-    def inform_done(self) -> None:
+    def end_of_timer(self) -> None:
         file_melody = self.settings.model.file_melody
 
         if not file_melody:

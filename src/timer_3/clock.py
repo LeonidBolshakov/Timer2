@@ -18,32 +18,16 @@ class Clock:
     def on_time_out(self) -> None:
         self.seconds_left -= 1
 
-        self.callback("draw_time", self.seconds_left)
+        self.callback("a_second_passed", self.seconds_left)
 
         if self.is_end_timer():
-            self.callback("inform_done")
+            self.callback("end_of_timer")
             return
-
-        model = self.settings.model
-
-        if self.seconds_left % model.voice_interval == 0:
-            self.callback("inform_voice", self.seconds_left)
-
-        if (
-            self.seconds_left < model.beep_period_in_final
-            and self.seconds_left % model.beep_interval == 0
-        ):
-            f.beep()
 
     def is_end_timer(self) -> bool:
         return self.seconds_left <= 0
 
     def connect(self, name_callback: str, func: Callable[..., None]) -> None:
-        if name_callback in self.connections:
-            f.inform_fatal_error_and_quit(
-                C.TITLE_INTERNAL_ERROR,
-                f"{C.TEXT_ERROR_NAME_CALLBACK} {name_callback}",
-            )
         self.connections[name_callback] = func
 
     def callback(self, func_name: str, param: int | None = None) -> None:

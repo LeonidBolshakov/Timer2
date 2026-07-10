@@ -84,6 +84,7 @@ class Timer3UiConfigurator:
         model = self.settings.model
 
         self.window.tabWidgetSetTime.setCurrentIndex(model.active_tab_in_QTabWidget)
+        pass
 
     def initialize_tabOrdinary(self) -> None:
         model = self.settings.model

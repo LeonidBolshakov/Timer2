@@ -8,6 +8,7 @@ from typing import NoReturn
 
 import pygame
 from PyQt6.QtWidgets import QApplication, QLineEdit, QMessageBox
+from PyQt6.QtCore import QTimer
 from num2words import num2words  # type: ignore
 
 from .param_keys import TuneValue
@@ -16,6 +17,8 @@ from .signals import signals
 from . import settings_schema as schema
 
 PROGRAM_NAME = "Timer_3"
+INTERNAL_ERROR_BEEP_2_DELAY_MS = 1500
+INTERNAL_ERROR_BEEP_3_DELAY_MS = 2500
 
 
 def num(line_edit: QLineEdit) -> int:
@@ -70,11 +73,6 @@ def get_word_form(number: int, word_after_number: list[str]) -> str:
             return word_after_number[0]
 
 
-def beep() -> None:
-    # noinspection PyArgumentList
-    QApplication.beep()
-
-
 def inform_fatal_error_and_quit(title: str, text: str) -> NoReturn:
     QMessageBox.warning(None, title, text)
     go_quit()
@@ -126,10 +124,6 @@ def cycle_intervals_list(text: str) -> list[int]:
         if not (0 < number <= schema.CYCLE_INTERVAL_ELEMENT_MAX):
             return []
     return lst
-
-
-def error(widget: QLineEdit) -> None:
-    beep()
 
 
 def _to_int(value: TuneValue, *, min_value: int = 0, max_value: int = 999999999) -> int:
@@ -213,3 +207,18 @@ def _to_str(
 
 def cycle_intervals_to_display(cycle_intervals: list[int]) -> str:
     return str(cycle_intervals)[1:-1]
+
+
+def beep() -> None:
+    # noinspection PyArgumentList
+    QApplication.beep()
+
+
+def beep_internal_error() -> None:
+    # Интервалы подобраны практически:
+    # QApplication.beep() на Windows может отрабатывать с собственной задержкой,
+    # поэтому равномерный слышимый ритм не обязательно соответствует равным
+    # QTimer-интервалам.
+    QTimer.singleShot(0, QApplication.beep)
+    QTimer.singleShot(INTERNAL_ERROR_BEEP_2_DELAY_MS, QApplication.beep)
+    QTimer.singleShot(INTERNAL_ERROR_BEEP_3_DELAY_MS, QApplication.beep)

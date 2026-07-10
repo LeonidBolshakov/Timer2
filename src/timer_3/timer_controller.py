@@ -37,28 +37,31 @@ class Timer3Controller:
     def __init__(self, window: Timer_3) -> None:
         self.window = window
         self.active_tab_in_QTabWidget = 0
-        self.clock: Clock | None = None
         self.tunes_window: TunesWindow | None = None
         self.settings = TunesSettings()
+        self.clock = Clock(1, self.settings)
+        cycle_intervals = self.settings.model.cycle_intervals
+        self.text_cycleintervals_old = f.cycle_intervals_to_display(cycle_intervals)
         self.inform_time = InformTime(self.settings)
 
     def on_btn_start_click(self) -> None:
+        active_tab_in_QTabWidget = self.settings.model.active_tab_in_QTabWidget
         seconds_left = self._get_seconds_left()
-        if self.clock is not None or seconds_left <= 0:
-            f.beep()
+
+        clock = Clock(seconds_left, self.settings)
+        if clock is None:
+            f.beep_internal_error()
+        self.clock = clock
+
+        if active_tab_in_QTabWidget == 0:
+            self._start_tab_ordinary()
             return
 
-        self.clock = Clock(seconds_left, self.settings)
-        if self.clock is None:
-            f.beep()
+        if active_tab_in_QTabWidget == 1:
+            self._start_tab_interval()
             return
 
-        self.clock.connect("draw_time", self.draw_time)
-        self.clock.connect("inform_voice", self.inform_time.inform_voice)
-        self.clock.connect("inform_done", self.inform_time.inform_done)
-        self.clock.start()
-        self.window.btnStart.setDisabled(True)
-        f.beep()
+        f.beep_internal_error()
 
     def on_btn_tunes_click(self) -> None:
         if self.tunes_window is None:
@@ -103,9 +106,12 @@ class Timer3Controller:
         intervals = f.cycle_intervals_list(text)
 
         if not intervals:
-            f.error(self.window.lineEditCycleIntervals)
+            f.beep()
+            self.window.lineEditCycleIntervals.setText(self.text_cycleintervals_old)
+            return
 
         self.settings.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
+        self.text_cycleintervals_old = text
 
     def on_endlessly_changed(self, state: int) -> None:
         self.settings.set_value(
@@ -123,7 +129,9 @@ class Timer3Controller:
     # ----- Работа с полями времени в окне "Timer" (Обычный таймер)
     # ------------------
 
-    def draw_time(self, seconds_left: int) -> None:
+    def a_second_passed(self, seconds_left: int) -> None:
+        self.check_inform_voice_and_final_beep()
+
         hour, minutes, sec = f.hour_minutes_sec(seconds_left)
 
         match self.active_time_field():
@@ -224,3 +232,27 @@ class Timer3Controller:
                 )
             case None:
                 return 0
+
+    def _start_tab_ordinary(self) -> None:
+        self.clock.connect("a_second_passed", self.a_second_passed)
+        self.clock.connect("end_of_timer", self.inform_time.end_of_timer)
+        self.clock.start()
+        self.window.btnStart.setDisabled(True)
+        f.beep()
+
+    def check_inform_voice_and_final_beep(self) -> None:
+        if self.clock.seconds_left % self.settings.model.voice_interval == 0:
+            self.inform_time.inform_voice(self.clock.seconds_left)
+
+        if (
+            self.clock.seconds_left < self.settings.model.beep_period_in_final
+            and self.clock.seconds_left % self.settings.model.beep_interval == 0
+        ):
+            f.beep()
+
+    # -----------------
+    # ----- Helpers (Иетервальный таймер)
+    # ------------------
+
+    def _start_tab_interval(self) -> None:
+        pass

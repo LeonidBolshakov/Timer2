@@ -13,6 +13,4 @@ def test_tune_key_values_are_stable() -> None:
 def active_tab_in_QTabWidget() -> None:
     dto_fields = {field.name for field in fields(DTO)}
     tune_keys = {key.value for key in ParamKeys}
-    print(sorted(dto_fields))
-    print(sorted(tune_keys))
     assert tune_keys <= dto_fields
