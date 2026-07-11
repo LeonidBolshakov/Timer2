@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator, Callable
 from typing import TYPE_CHECKING
 from enum import Enum
 
@@ -15,7 +16,7 @@ from . import functions as f
 from .param_keys import ParamKeys
 from .tunes import TunesWindow
 from .inform import InformTime
-from .tunes import TunesSettings
+from .tunes import Context
 
 if TYPE_CHECKING:
     from .main import Timer_3
@@ -37,41 +38,39 @@ class Timer3Controller:
     def __init__(self, window: Timer_3) -> None:
         self.window = window
         self.active_tab_in_QTabWidget = 0
-        self.tunes_window: TunesWindow | None = None
-        self.settings = TunesSettings()
-        self.clock = Clock(1, self.settings)
-        cycle_intervals = self.settings.model.cycle_intervals
-        self.text_cycleintervals_old = f.cycle_intervals_to_display(cycle_intervals)
-        self.inform_time = InformTime(self.settings)
+        self._current_interval_index = 0
+        self._cycle_intervals_iter: Iterator[int] = iter([])
+        self._seconds_interval = 0
+        self._repetitions_count = 0
+        self._tunes_window: TunesWindow | None = None
+        self.context = Context()
+        self._clock = Clock(1, self.context)
+        cycle_intervals = self.context.model.cycle_intervals
+        self._text_cycle_intervals_prev = f.cycle_intervals_to_display(cycle_intervals)
+        self.inform_time = InformTime(self.context)
 
     def on_btn_start_click(self) -> None:
-        active_tab_in_QTabWidget = self.settings.model.active_tab_in_QTabWidget
-        seconds_left = self._get_seconds_left()
-
-        clock = Clock(seconds_left, self.settings)
-        if clock is None:
-            f.beep_internal_error()
-        self.clock = clock
+        active_tab_in_QTabWidget = self.context.model.active_tab_in_QTabWidget
 
         if active_tab_in_QTabWidget == 0:
-            self._start_tab_ordinary()
-            return
+            self._prepare_start_tab_ordinary()
 
         if active_tab_in_QTabWidget == 1:
-            self._start_tab_interval()
-            return
+            self._prepare_start_tab_interval()
 
-        f.beep_internal_error()
+        self.window.btnStart.setDisabled(True)
+        f.beep()
+        self._clock.start()
 
     def on_btn_tunes_click(self) -> None:
-        if self.tunes_window is None:
-            self.tunes_window = TunesWindow(self.settings)
+        if self._tunes_window is None:
+            self._tunes_window = TunesWindow(self.context)
 
-        if self.tunes_window is None:
+        if self._tunes_window is None:
             return
 
-        self.tunes_window.refresh_ui()
-        self.tunes_window.show_ui()
+        self._tunes_window.refresh_ui()
+        self._tunes_window.show_ui()
 
     def on_line_edit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
         match self.active_time_field(widget):
@@ -107,29 +106,33 @@ class Timer3Controller:
 
         if not intervals:
             f.beep()
-            self.window.lineEditCycleIntervals.setText(self.text_cycleintervals_old)
+            self.window.lineEditCycleIntervals.setText(self._text_cycle_intervals_prev)
             return
 
-        self.settings.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
-        self.text_cycleintervals_old = text
+        self.context.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
+        self._text_cycle_intervals_prev = text
 
     def on_endlessly_changed(self, state: int) -> None:
-        self.settings.set_value(
+        self.context.set_value(
             ParamKeys.CYCLE_ENDLESSLY,
             state == Qt.CheckState.Checked.value,
         )
+        if state == Qt.CheckState.Checked.value:
+            self.window.spinBoxCycleRepetitions.setDisabled(True)
+        if state == Qt.CheckState.Unchecked.value:
+            self.window.spinBoxCycleRepetitions.setDisabled(False)
 
     def on_cycle_repetitions_changed(self, value: int) -> None:
-        self.settings.set_value(ParamKeys.CYCLE_REPETITIONS, value)
+        self.context.set_value(ParamKeys.CYCLE_REPETITIONS, value)
 
     def on_QTabWidget_changed(self, index: int) -> None:
-        self.settings.set_value(ParamKeys.ACTIVE_TAB_IN_QTABWIDGET, index)
+        self.context.set_value(ParamKeys.ACTIVE_TAB_IN_QTABWIDGET, index)
 
     # -----------------
     # ----- Работа с полями времени в окне "Timer" (Обычный таймер)
     # ------------------
 
-    def a_second_passed(self, seconds_left: int) -> None:
+    def for_ordinary_a_second_passed(self, seconds_left: int) -> None:
         self.check_inform_voice_and_final_beep()
 
         hour, minutes, sec = f.hour_minutes_sec(seconds_left)
@@ -190,16 +193,16 @@ class Timer3Controller:
     def _commit_time_state_and_advance_focus(
         self, widget: QLineEdit, next_focus: QWidget
     ) -> None:
-        self._put_int_state(ParamKeys.HM_H, self.window.lineEdit_HM_H.text())
-        self._put_int_state(ParamKeys.HM_M, self.window.lineEdit_HM_M.text())
-        self._put_int_state(ParamKeys.MS_M, self.window.lineEdit_MS_M.text())
-        self._put_int_state(ParamKeys.MS_S, self.window.lineEdit_MS_S.text())
+        self._put_state(ParamKeys.HM_H, self.window.lineEdit_HM_H.text())
+        self._put_state(ParamKeys.HM_M, self.window.lineEdit_HM_M.text())
+        self._put_state(ParamKeys.MS_M, self.window.lineEdit_MS_M.text())
+        self._put_state(ParamKeys.MS_S, self.window.lineEdit_MS_S.text())
 
         if len(widget.text()) == 2:
             next_focus.setFocus()
 
-    def _put_int_state(self, key: ParamKeys, value: str) -> None:
-        self.settings.set_value(key, value if value else 0)
+    def _put_state(self, key: ParamKeys, value: str) -> None:
+        self.context.set_value(key, value if value else 0)
 
     @staticmethod
     def _activate_widgets(
@@ -233,26 +236,97 @@ class Timer3Controller:
             case None:
                 return 0
 
-    def _start_tab_ordinary(self) -> None:
-        self.clock.connect("a_second_passed", self.a_second_passed)
-        self.clock.connect("end_of_timer", self.inform_time.end_of_timer)
-        self.clock.start()
-        self.window.btnStart.setDisabled(True)
-        f.beep()
+    def _prepare_start_tab_ordinary(self) -> None:
+        seconds_left = self._get_seconds_left()
+        self.prepare_timer(
+            seconds_left,
+            self.for_ordinary_a_second_passed,
+            self.inform_time.end_of_timer,
+        )
 
     def check_inform_voice_and_final_beep(self) -> None:
-        if self.clock.seconds_left % self.settings.model.voice_interval == 0:
-            self.inform_time.inform_voice(self.clock.seconds_left)
+        if self._clock.seconds_left % self.context.model.voice_interval == 0:
+            self.inform_time.inform_voice(self._clock.seconds_left)
 
         if (
-            self.clock.seconds_left < self.settings.model.beep_period_in_final
-            and self.clock.seconds_left % self.settings.model.beep_interval == 0
+            self._clock.seconds_left < self.context.model.beep_period_in_final
+            and self._clock.seconds_left % self.context.model.beep_interval == 0
         ):
             f.beep()
 
     # -----------------
-    # ----- Helpers (Иетервальный таймер)
+    # ----- Helpers (Интервальный таймер)
     # ------------------
 
-    def _start_tab_interval(self) -> None:
-        pass
+    def _prepare_start_tab_interval(self) -> None:
+        intervals = self.context.model.cycle_intervals
+
+        self._cycle_intervals_iter = iter(intervals)
+        try:
+            self._seconds_interval = next(self._cycle_intervals_iter)
+        except StopIteration:
+            self._seconds_interval = 0
+
+        if self.context.model.endlessly:
+            self.processing_endlessly_cycle()
+        else:
+            self.processing_repetitions_cycle()
+
+        self._show_current_cycle_interval()
+
+    def processing_endlessly_cycle(self) -> None:
+        self.prepare_timer(
+            self._seconds_interval, self.cycle_second_signal, self.cycle_end_interval
+        )
+
+    def cycle_end_interval(self) -> None:
+        self._current_interval_index += 1
+        try:
+            self._seconds_interval = next(self._cycle_intervals_iter)
+            self._clock.restart(self._seconds_interval)
+        except StopIteration:
+            if not self.context.model.endlessly:
+                if self._repetitions_count < 0:
+                    f.go_quit()
+
+                self._repetitions_count -= 1
+
+            self.clock_restart()
+
+        f.beep()
+        self._show_current_cycle_interval()
+
+    def cycle_second_signal(self, seconds_left: int) -> None:
+        self.window.lineEditLeft.setText(str(seconds_left))
+
+    def prepare_timer(
+        self,
+        seconds_interval: int,
+        a_second_passed: Callable[[int], None],
+        end_of_timer: Callable[[], None],
+    ) -> None:
+        self._clock.seconds_left = seconds_interval
+        self._clock.connect("a_second_passed", a_second_passed)
+        self._clock.connect("end_of_timer", end_of_timer)
+
+    def _show_current_cycle_interval(self) -> None:
+        self.window.lineEditCurrentInterval.setText(
+            str(self._current_interval_index + 1)
+        )
+        self.window.lineEditIntervalDuration.setText(str(self._seconds_interval))
+
+    def processing_repetitions_cycle(self) -> None:
+        self.prepare_timer(
+            self._seconds_interval,
+            self.cycle_second_signal,
+            self.cycle_end_interval,
+        )
+
+    def clock_restart(self) -> None:
+        self._current_interval_index = 0
+        self._cycle_intervals_iter = iter(self.context.model.cycle_intervals)
+        try:
+            self._seconds_interval = next(self._cycle_intervals_iter)
+        except StopIteration:
+            self._seconds_interval = 0
+        self._clock.restart(self._seconds_interval)

@@ -15,13 +15,13 @@ sys.stdout = sys.__stdout__
 from . import functions as f
 from .const import Const as C
 from .signals import signals
-from .tunes import TunesSettings
+from .tunes import Context
 
 
 class InformTime:
     """Голосовое и звуковое информирование пользователя."""
 
-    def __init__(self, settings: TunesSettings) -> None:
+    def __init__(self, settings: Context) -> None:
         self.settings = settings
         self.voice_lock = threading.Lock()
 

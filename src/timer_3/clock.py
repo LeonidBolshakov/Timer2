@@ -1,15 +1,16 @@
+import traceback
 from collections.abc import Callable
 
 from .precise_timer import PreciseTimer
 from .const import Const as C
-from .tunes import TunesSettings
+from .tunes import Context
 from . import functions as f
 
 
 class Clock:
     """Управляет отсчётом времени и событиями таймера."""
 
-    def __init__(self, seconds_left: int, settings: TunesSettings) -> None:
+    def __init__(self, seconds_left: int, settings: Context) -> None:
         self.seconds_left = seconds_left
         self.settings = settings
         self.connections: dict[str, Callable[..., None]] = {}
@@ -18,11 +19,11 @@ class Clock:
     def on_time_out(self) -> None:
         self.seconds_left -= 1
 
-        self.callback("a_second_passed", self.seconds_left)
-
         if self.is_end_timer():
             self.callback("end_of_timer")
             return
+
+        self.callback("a_second_passed", self.seconds_left)
 
     def is_end_timer(self) -> bool:
         return self.seconds_left <= 0
@@ -38,6 +39,7 @@ class Clock:
             else:
                 callback(param)
         except Exception as err:
+            traceback.print_exc()
             f.inform_fatal_error_and_quit(
                 C.TITLE_INTERNAL_ERROR,
                 f"{C.TEXT_ERROR_CALLBACK} {func_name}\n{err}",
@@ -45,3 +47,11 @@ class Clock:
 
     def start(self) -> None:
         self.timer.start()
+
+    def stop(self) -> None:
+        self.timer.stop()
+
+    def restart(self, seconds_left: int) -> None:
+        self.stop()
+        self.seconds_left = seconds_left
+        self.timer.restart()

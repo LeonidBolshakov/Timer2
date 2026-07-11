@@ -11,19 +11,28 @@ class PreciseTimer:
         self.interval = interval_ms
         self.callback = callback
         self.elapsed = QElapsedTimer()
+
         self.timer = QTimer()
         self.timer.setSingleShot(True)
-        self.timer.setInterval(self.interval)
         self.timer.timeout.connect(self._on_timeout)
+
         self.tick_count = 0
 
-
     def start(self) -> None:
+        self.restart()
+
+    def restart(self) -> None:
+        self.stop()
+        self.tick_count = 0
         self.elapsed.start()
-        self.timer.start(0)
+        self.timer.start(self.interval)
+
+    def stop(self) -> None:
+        self.timer.stop()
 
     def _on_timeout(self) -> None:
         self.tick_count += 1
+
         now = self.elapsed.elapsed()
         expected_time = self.tick_count * self.interval
         drift = now - expected_time

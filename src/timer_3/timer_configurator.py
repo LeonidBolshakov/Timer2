@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QRegularExpression
+from PyQt6.QtCore import QRegularExpression, Qt
 from PyQt6.QtGui import QRegularExpressionValidator
 
 from . import functions as f
@@ -17,7 +17,7 @@ class Timer3UiConfigurator:
     def __init__(self, window: Timer_3, controller: Timer3Controller) -> None:
         self.window = window
         self.controller = controller
-        self.settings = controller.settings
+        self.context = controller.context
         self.validator_hour = QRegularExpressionValidator(
             QRegularExpression(C.RE_PATTERN_0_24)
         )
@@ -69,25 +69,26 @@ class Timer3UiConfigurator:
         self.window.spinBoxCycleRepetitions.valueChanged.connect(
             self.controller.on_cycle_repetitions_changed
         )
+
         self.window.tabWidgetSetTime.currentChanged.connect(
             self.controller.on_QTabWidget_changed
         )
 
     def init_vars(self) -> None:
         self.window.lblSec.setText("")
-        if self.settings.model.restore_time:
+        if self.context.model.restore_time:
             self.initialize_current_tab()
             self.initialize_tabOrdinary()
             self.initialize_tabCycle()
 
     def initialize_current_tab(self) -> None:
-        model = self.settings.model
+        model = self.context.model
 
         self.window.tabWidgetSetTime.setCurrentIndex(model.active_tab_in_QTabWidget)
         pass
 
     def initialize_tabOrdinary(self) -> None:
-        model = self.settings.model
+        model = self.context.model
 
         if model.hm_h != 0 or model.hm_m != 0:
             self.window.lineEdit_HM_H.setText(str(model.hm_h))
@@ -98,8 +99,13 @@ class Timer3UiConfigurator:
             self.window.lineEdit_MS_S.setText(str(model.ms_s))
 
     def initialize_tabCycle(self) -> None:
-        model = self.settings.model
+        model = self.context.model
 
         self.window.lineEditCycleIntervals.setText(
             f.cycle_intervals_to_display(model.cycle_intervals)
         )
+
+        self.window.checkboxEndlessly.setCheckState(
+            Qt.CheckState.Checked if model.endlessly else Qt.CheckState.Unchecked
+        )
+        self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
