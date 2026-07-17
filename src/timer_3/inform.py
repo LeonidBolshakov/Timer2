@@ -15,7 +15,7 @@ sys.stdout = sys.__stdout__
 from . import functions as f
 from .const import Const as C
 from .signals import signals
-from .tunes import Context
+from .context import Context
 
 
 class InformTime:

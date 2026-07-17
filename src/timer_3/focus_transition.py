@@ -3,9 +3,12 @@ from __future__ import annotations
 from itertools import pairwise
 from typing import TYPE_CHECKING
 from enum import Enum, auto
+from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
+
+from time_input_mode import TimeInputMode
 
 if TYPE_CHECKING:
     from .main import Timer_3
@@ -50,21 +53,57 @@ _SCHEMAS: dict[FocusSchema, tuple[str, ...]] = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class FocusTarget:
+    widget: QWidget
+    policy: Qt.FocusPolicy
+
+
 class FocusTransition:
     def __init__(self, window: Timer_3) -> None:
         self.window = window
 
-        self._widgets_by_code: dict[str, QWidget] = {
-            "HM_H": window.lineEdit_HM_H,
-            "HM_M": window.lineEdit_HM_M,
-            "MS_M": window.lineEdit_MS_M,
-            "MS_S": window.lineEdit_MS_S,
-            "Start": window.btnStart,
-            "Quit": window.btnQuit,
-            "Tunes": window.btnTunes,
-            "Intervals": window.lineEditCycleIntervals,
-            "Endlessly": window.checkboxEndlessly,
-            "Repetitions": window.spinBoxCycleRepetitions,
+        self._focus_targets_by_code: dict[str, FocusTarget] = {
+            "HM_H": FocusTarget(
+                window.lineEdit_HM_H,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "HM_M": FocusTarget(
+                window.lineEdit_HM_M,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "MS_M": FocusTarget(
+                window.lineEdit_MS_M,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "MS_S": FocusTarget(
+                window.lineEdit_MS_S,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "Start": FocusTarget(
+                window.btnStart,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "Quit": FocusTarget(
+                window.btnQuit,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "Tunes": FocusTarget(
+                window.btnTunes,
+                Qt.FocusPolicy.TabFocus,
+            ),
+            "Intervals": FocusTarget(
+                window.lineEditCycleIntervals,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "Endlessly": FocusTarget(
+                window.checkboxEndlessly,
+                Qt.FocusPolicy.StrongFocus,
+            ),
+            "Repetitions": FocusTarget(
+                window.spinBoxCycleRepetitions,
+                Qt.FocusPolicy.StrongFocus,
+            ),
         }
 
     def set_focus_sequence(self, schema: FocusSchema) -> None:
@@ -73,39 +112,49 @@ class FocusTransition:
         )
 
     def _schema_processing(self, schema: tuple[str, ...]) -> None:
-        unknown_codes = set(schema) - self._widgets_by_code.keys()
-        for cod in self._widgets_by_code:
-            if cod not in schema:
-                self._widgets_by_code[cod].setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        unknown_codes = set(schema) - self._focus_targets_by_code.keys()
 
         if unknown_codes:
             raise KeyError(
-                "Внутренняя ошибка. В словаре widgets_by_code отсутствуют: "
+                "Внутренняя ошибка. В словаре focus_targets_by_code отсутствуют: \n"
                 f"{sorted(unknown_codes)}"
             )
 
-        for widget in self._widgets_by_code.values():
-            widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self._reset_tab_focus()
 
-        for cod in schema:
-            self._widgets_by_code[cod].setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-
-        for current, following in pairwise(schema):
-            QWidget.setTabOrder(
-                self._widgets_by_code[current],
-                self._widgets_by_code[following],
+        for code in schema:
+            self._focus_targets_by_code[code].widget.setFocusPolicy(
+                self._focus_targets_by_code[code].policy
             )
 
-    def start_focus_for_ordinary(
-        self,
-        time_fields_are_empty: bool,
-    ) -> None:
-        if time_fields_are_empty:
-            self.set_focus_sequence(FocusSchema.ORDINARY_EMPTY)
-            self.window.lineEdit_MS_M.setFocus()
-        else:
-            self.set_focus_sequence(FocusSchema.ORDINARY_MS)
-            self.window.btnStart.setFocus()
+        for current_code, following_code in pairwise(schema):
+            current = self._focus_targets_by_code[current_code].widget
+            following = self._focus_targets_by_code[following_code].widget
+
+            QWidget.setTabOrder(current, following)
+
+    def start_focus_for_ordinary(self, state: TimeInputMode | None) -> None:
+        match state:
+            case None:
+                self.set_focus_sequence(FocusSchema.ORDINARY_EMPTY)
+                self.window.lineEdit_MS_M.setFocus()
+                return
+
+            case TimeInputMode.MS:
+                self.set_focus_sequence(FocusSchema.ORDINARY_MS)
+                self.window.btnStart.setFocus()
+                return
+
+            case TimeInputMode.HM:
+                self.set_focus_sequence(FocusSchema.ORDINARY_HM)
+                self.window.btnStart.setFocus()
+                return
+
+        raise RuntimeError(
+            f"Внутренняя ошибка."
+            f"class FocusTransition -> start_focus_for_ordinary\n"
+            f"недопустимый параметр - {state}"
+        )
 
     def start_focus_for_cycle(self) -> None:
         self.set_focus_sequence(FocusSchema.CYCLE)
@@ -114,7 +163,7 @@ class FocusTransition:
         else:
             self.window.btnStart.setFocus()
 
-    def set_mouse_only_focus(self) -> None:
+    def _reset_tab_focus(self) -> None:
         for widget in self.window.findChildren(QWidget):
             if widget.focusPolicy() != Qt.FocusPolicy.NoFocus:
                 widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)

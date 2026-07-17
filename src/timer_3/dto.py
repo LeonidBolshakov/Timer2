@@ -17,7 +17,7 @@ class DTO:
     ms_s: int
     active_tab_in_QTabWidget: int
     cycle_intervals: str
-    cycle_Repetitions: int
+    cycle_repetitions: int
     cycle_endlessly: bool
 
     current_interval: int

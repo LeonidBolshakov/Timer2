@@ -27,6 +27,7 @@ class Context:
         dto = self.storage.switch_settings_file(settings_file)
         self.model = dto_to_model(dto)
 
-    def set_value(self, key: ParamKeys, value: TuneValue) -> None:
+    def set_value(self, key: ParamKeys, value: TuneValue, save: bool = True) -> None:
         self.model.set_value(key, value)
-        self.save()
+        if save:
+            self.save()

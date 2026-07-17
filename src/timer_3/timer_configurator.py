@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QRegularExpression, Qt
+from PyQt6.QtCore import QRegularExpression, Qt, QSignalBlocker
 from PyQt6.QtGui import QRegularExpressionValidator
 
 from . import functions as f
 from .const import Const as C
-from .focus_transition import FocusTransition
 from .param_keys import ParamKeys
 from .timer_controller import Timer3Controller
 
@@ -21,7 +20,6 @@ class Timer3UiConfigurator:
         self.controller = controller
         self.context = controller.context
 
-        self.focus_transition = FocusTransition(self.window)
         self.validator_hour = QRegularExpressionValidator(
             QRegularExpression(C.RE_PATTERN_0_24)
         )
@@ -57,18 +55,18 @@ class Timer3UiConfigurator:
             lambda: self.controller.on_line_edit_edited(self.window.lineEdit_MS_S)
         )
         self.window.lineEditCycleIntervals.textEdited.connect(
-            self.controller.on_lineEditCycleIntervals_edited
+            self.controller.on_line_edit_cycle_intervals_edited
         )
         self.window.checkboxEndlessly.stateChanged.connect(
             self.controller.on_endlessly_changed
         )
 
         self.window.spinBoxCycleRepetitions.valueChanged.connect(
-            self.controller.on_cycle_Repetitions_changed
+            self.controller.on_cycle_repetitions_changed
         )
 
         self.window.tabWidgetSetTime.currentChanged.connect(
-            self.controller.on_QTabWidget_changed
+            self.controller.on_qtab_widget_changed
         )
 
     def init_vars_and_focus(self) -> None:
@@ -78,10 +76,9 @@ class Timer3UiConfigurator:
             self.init_ordinary_fields()
             self.init_cycle_fields()
         else:
-            self.reser_ordinary_fields()
+            self.reset_ordinary_fields()
             self.reset_cycle_fields()
 
-        self.focus_transition.set_mouse_only_focus()
         self.init_current_tab_and_focus()
 
     def init_ordinary_fields(self) -> None:
@@ -103,22 +100,23 @@ class Timer3UiConfigurator:
         self.window.checkboxEndlessly.setCheckState(
             Qt.CheckState.Checked if model.endlessly else Qt.CheckState.Unchecked
         )
-        self.window.spinBoxCycleRepetitions.setValue(model.cycle_Repetitions)
+        self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
 
-    def reser_ordinary_fields(self) -> None:
-        self.context.set_value(ParamKeys.HM_M, 0)
-        self.context.set_value(ParamKeys.HM_M, 0)
-        self.context.set_value(ParamKeys.MS_M, 0)
-        self.context.set_value(ParamKeys.MS_S, 0)
+    def reset_ordinary_fields(self) -> None:
+        self.context.set_value(ParamKeys.HM_H, 0, save=False)
+        self.context.set_value(ParamKeys.HM_M, 0, save=False)
+        self.context.set_value(ParamKeys.MS_M, 0, save=False)
+        self.context.set_value(ParamKeys.MS_S, 0, save=False)
 
     def reset_cycle_fields(self) -> None:
-        self.context.set_value(ParamKeys.CYCLE_INTERVALS, "")
-        self.context.set_value(ParamKeys.CYCLE_ENDLESSLY, False)
-        self.context.set_value(ParamKeys.CYCLE_Repetitions, 1)
+        self.context.set_value(ParamKeys.CYCLE_INTERVALS, [], save=False)
+        self.context.set_value(ParamKeys.CYCLE_ENDLESSLY, False, save=False)
+        self.context.set_value(ParamKeys.cycle_repetitions, 1)
 
     def init_current_tab_and_focus(self) -> None:
         tab_index = self.context.model.active_tab_in_QTabWidget
-        self.window.tabWidgetSetTime.setCurrentIndex(tab_index)
+        with QSignalBlocker(self.window.tabWidgetSetTime):
+            self.window.tabWidgetSetTime.setCurrentIndex(tab_index)
         self.controller.init_focus_for_tab(tab_index)
 
     def init_tabCycle(self) -> None:
@@ -131,7 +129,7 @@ class Timer3UiConfigurator:
         self.window.checkboxEndlessly.setCheckState(
             Qt.CheckState.Checked if model.endlessly else Qt.CheckState.Unchecked
         )
-        self.window.spinBoxCycleRepetitions.setValue(model.cycle_Repetitions)
+        self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
 
     def init_active_button_style(self) -> None:
         self.window.setStyleSheet(

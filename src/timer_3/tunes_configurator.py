@@ -22,7 +22,7 @@ class TunesConfigurator:
             shema.BEEP_INTERVAL_MIN, shema.BEEP_INTERVAL_MAX, self.window
         )
         self.beep_period_in_final_validator = QIntValidator(
-            shema.BEEP_PERIOD_IN_FINAL_MIN, shema.BEEP_PERIOD_IN_FINAL_MIN, self.window
+            shema.BEEP_PERIOD_IN_FINAL_MIN, shema.BEEP_PERIOD_IN_FINAL_MAX, self.window
         )
 
         self._set_validators()
