@@ -187,8 +187,8 @@ def _to_bool(value: TuneValue) -> bool:
     )
 
 
-def _to_cycle_interval(value: list[int]) -> str:
-    return str(value)
+def to_cycle_interval(value: list[int]) -> str:
+    return str(value)[1:-1].replace(",", " ")
 
 
 def _to_str(

@@ -55,8 +55,8 @@ class Timer_3(QMainWindow):
         super().__init__(None)
         uic.loadUi(str(f.resource_path(C.TIMER_3_UI)), self)
 
-        controller = Timer3Controller(self)
-        Timer3UiConfigurator(self, controller)
+        self.controller = Timer3Controller(self)
+        Timer3UiConfigurator(self, self.controller)
 
     def start(self) -> int:
         self.show()

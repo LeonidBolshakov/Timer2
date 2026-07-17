@@ -22,7 +22,7 @@ class TunesController:
         self.window = window
         self.settings = window.settings
 
-    def refresh_ui(self) -> None:
+    def refresh_tune_ui(self) -> None:
         model = self.settings.model
 
         self.window.lnEdFileTunes.setText(str(self.settings.settings_file))
@@ -69,7 +69,7 @@ class TunesController:
             return
         self.settings.set_value(ParamKeys.FILE_MELODY, file_path)
         self._show_storage_warnings()
-        self.refresh_ui()
+        self.refresh_tune_ui()
 
     def on_tool_btn_file_tunes(self) -> None:
         file_path = self._select_file(
@@ -84,7 +84,7 @@ class TunesController:
     def on_file_tunes_edited(self) -> None:
         text = self.window.lnEdFileTunes.text().strip()
         if not text:
-            self.refresh_ui()
+            self.refresh_tune_ui()
             return
         path = self._normalize_json_path(text)
         self._switch_settings_file(path)
@@ -100,12 +100,12 @@ class TunesController:
             )
         finally:
             self._show_storage_warnings()
-            self.refresh_ui()
+            self.refresh_tune_ui()
 
     def _switch_settings_file(self, path: Path) -> None:
         self.settings.switch_settings_file(path)
         self._show_storage_warnings()
-        self.refresh_ui()
+        self.refresh_tune_ui()
 
     def _select_file(self, current_file: str, title: str, types_file: str) -> str:
         directory = (

@@ -43,7 +43,7 @@ class TunesWindow(QWidget):
         self.configurator = TunesConfigurator(self, self.controller)
 
     def refresh_ui(self) -> None:
-        self.controller.refresh_ui()
+        self.controller.refresh_tune_ui()
 
     def show_ui(self) -> None:
         self.show()

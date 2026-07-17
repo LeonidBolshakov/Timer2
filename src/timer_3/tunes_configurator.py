@@ -26,7 +26,7 @@ class TunesConfigurator:
         )
 
         self._set_validators()
-        self.controller.refresh_ui()
+        self.controller.refresh_tune_ui()
         self._connect_signals()
 
     def _connect_signals(self) -> None:

@@ -7,7 +7,6 @@ from enum import Enum
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QLineEdit,
-    QWidget,
 )
 
 from .clock import Clock
@@ -17,6 +16,7 @@ from .param_keys import ParamKeys
 from .tunes import TunesWindow
 from .inform import InformTime
 from .tunes import Context
+from .focus_transition import FocusTransition, FocusSchema
 
 if TYPE_CHECKING:
     from .main import Timer_3
@@ -42,11 +42,10 @@ class Timer3Controller:
         self._cycle_intervals_iter: Iterator[int] = iter([])
         self._seconds_interval = 0
         self._repetitions_count = 0
+        self.focus_transition = FocusTransition(self.window)
         self._tunes_window: TunesWindow | None = None
         self.context = Context()
-        self._clock = Clock(1, self.context)
-        cycle_intervals = self.context.model.cycle_intervals
-        self._text_cycle_intervals_prev = f.cycle_intervals_to_display(cycle_intervals)
+        self._clock = Clock()
         self.inform_time = InformTime(self.context)
 
     def on_btn_start_click(self) -> None:
@@ -72,7 +71,7 @@ class Timer3Controller:
         self._tunes_window.refresh_ui()
         self._tunes_window.show_ui()
 
-    def on_line_edit_edited(self, widget: QLineEdit, focus: QWidget) -> None:
+    def on_line_edit_edited(self, widget: QLineEdit) -> None:
         match self.active_time_field(widget):
             case TimeField.HM:
                 self._activate_widgets(
@@ -83,6 +82,7 @@ class Timer3Controller:
                     self.window.lineEdit_MS_M,
                     self.window.lineEdit_MS_S,
                 )
+                self.focus_transition.set_focus_sequence(FocusSchema.ORDINARY_HM)
             case TimeField.MS:
                 self._activate_widgets(
                     self.window.lineEdit_MS_M,
@@ -92,13 +92,13 @@ class Timer3Controller:
                     self.window.lineEdit_HM_H,
                     self.window.lineEdit_HM_M,
                 )
+                self.focus_transition.set_focus_sequence(FocusSchema.ORDINARY_MS)
             case None:
                 f.inform_fatal_error_and_quit(
                     C.TITLE_INTERNAL_ERROR,
                     C.TEXT_ERROR_UNKNOWN,
                 )
-
-        self._commit_time_state_and_advance_focus(widget, focus)
+        self._commit_time_state_and_advance_focus(widget)
 
     def on_lineEditCycleIntervals_edited(self) -> None:
         text = self.window.lineEditCycleIntervals.text()
@@ -106,11 +106,10 @@ class Timer3Controller:
 
         if not intervals:
             f.beep()
-            self.window.lineEditCycleIntervals.setText(self._text_cycle_intervals_prev)
+            self.window.lineEditCycleIntervals.undo()
             return
 
         self.context.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
-        self._text_cycle_intervals_prev = text
 
     def on_endlessly_changed(self, state: int) -> None:
         self.context.set_value(
@@ -122,10 +121,11 @@ class Timer3Controller:
         if state == Qt.CheckState.Unchecked.value:
             self.window.spinBoxCycleRepetitions.setDisabled(False)
 
-    def on_cycle_repetitions_changed(self, value: int) -> None:
-        self.context.set_value(ParamKeys.CYCLE_REPETITIONS, value)
+    def on_cycle_Repetitions_changed(self, value: int) -> None:
+        self.context.set_value(ParamKeys.CYCLE_Repetitions, value)
 
     def on_QTabWidget_changed(self, index: int) -> None:
+        self.init_focus_for_tab(index)
         self.context.set_value(ParamKeys.ACTIVE_TAB_IN_QTABWIDGET, index)
 
     # -----------------
@@ -159,10 +159,10 @@ class Timer3Controller:
             self.window.lineEdit_MS_S,
         )
 
-        if any(widget is field for field in hm_fields):
+        if widget in hm_fields:
             return TimeField.HM
 
-        if any(widget is field for field in ms_fields):
+        if widget in ms_fields:
             return TimeField.MS
 
         f.inform_fatal_error_and_quit(
@@ -190,16 +190,14 @@ class Timer3Controller:
             return TimeField.HM
         return None
 
-    def _commit_time_state_and_advance_focus(
-        self, widget: QLineEdit, next_focus: QWidget
-    ) -> None:
+    def _commit_time_state_and_advance_focus(self, widget: QLineEdit) -> None:
         self._put_state(ParamKeys.HM_H, self.window.lineEdit_HM_H.text())
         self._put_state(ParamKeys.HM_M, self.window.lineEdit_HM_M.text())
         self._put_state(ParamKeys.MS_M, self.window.lineEdit_MS_M.text())
         self._put_state(ParamKeys.MS_S, self.window.lineEdit_MS_S.text())
 
         if len(widget.text()) == 2:
-            next_focus.setFocus()
+            self.window.focusNextChild()
 
     def _put_state(self, key: ParamKeys, value: str) -> None:
         self.context.set_value(key, value if value else 0)
@@ -266,18 +264,18 @@ class Timer3Controller:
             self._seconds_interval = next(self._cycle_intervals_iter)
         except StopIteration:
             self._seconds_interval = 0
-
         if self.context.model.endlessly:
-            self.processing_endlessly_cycle()
+            self._processing_endlessly_cycle()
         else:
-            self.processing_repetitions_cycle()
+            self._processing_repetitions_cycle()
 
         self._show_current_cycle_interval()
 
-    def processing_endlessly_cycle(self) -> None:
+    def _processing_endlessly_cycle(self) -> None:
         self.prepare_timer(
             self._seconds_interval, self.cycle_second_signal, self.cycle_end_interval
         )
+        self.init_left_field()
 
     def cycle_end_interval(self) -> None:
         self._current_interval_index += 1
@@ -292,9 +290,11 @@ class Timer3Controller:
                 self._repetitions_count -= 1
 
             self.clock_restart()
+            self.init_left_field()
 
         f.beep()
         self._show_current_cycle_interval()
+        self.init_left_field()
 
     def cycle_second_signal(self, seconds_left: int) -> None:
         self.window.lineEditLeft.setText(str(seconds_left))
@@ -315,12 +315,13 @@ class Timer3Controller:
         )
         self.window.lineEditIntervalDuration.setText(str(self._seconds_interval))
 
-    def processing_repetitions_cycle(self) -> None:
+    def _processing_repetitions_cycle(self) -> None:
         self.prepare_timer(
             self._seconds_interval,
             self.cycle_second_signal,
             self.cycle_end_interval,
         )
+        self.init_left_field()
 
     def clock_restart(self) -> None:
         self._current_interval_index = 0
@@ -330,3 +331,21 @@ class Timer3Controller:
         except StopIteration:
             self._seconds_interval = 0
         self._clock.restart(self._seconds_interval)
+
+    def init_focus_for_tab(self, tab_index: int) -> None:
+        self.window.tabWidgetSetTime.setCurrentIndex(tab_index)
+
+        if tab_index == 0:
+            self.focus_transition.start_focus_for_ordinary(
+                self.context.model.ordinary_time_is_empty
+            )
+            return
+
+        if tab_index == 1:
+            self.focus_transition.start_focus_for_cycle()
+            return
+
+        raise RuntimeError(C.TITLE_INTERNAL_ERROR)
+
+    def init_left_field(self) -> None:
+        self.window.lineEditLeft.setText(str(self._seconds_interval))

@@ -21,7 +21,7 @@ class Model:
     ms_s: int
     active_tab_in_QTabWidget: int
     cycle_intervals: list[int]
-    cycle_repetitions: int
+    cycle_Repetitions: int
     endlessly: bool
     current_interval: int
     interval_duration: int
@@ -78,8 +78,8 @@ class Model:
             case ParamKeys.CYCLE_ENDLESSLY:
                 self.endlessly = f._to_bool(value)
 
-            case ParamKeys.CYCLE_REPETITIONS:
-                self.cycle_repetitions = f._to_int(value)
+            case ParamKeys.CYCLE_Repetitions:
+                self.cycle_Repetitions = f._to_int(value)
 
             case ParamKeys.ACTIVE_TAB_IN_QTABWIDGET:
                 self.active_tab_in_QTabWidget = f._to_int(value)
@@ -88,3 +88,15 @@ class Model:
                 f.inform_fatal_error_and_quit(
                     C.TITLE_INTERNAL_ERROR, f"Неизвестный ключ параметра: {key!r}"
                 )
+
+    @property
+    def ordinary_time_is_empty(self) -> bool:
+        return all(
+            value == 0
+            for value in (
+                self.hm_h,
+                self.hm_m,
+                self.ms_m,
+                self.ms_s,
+            )
+        )

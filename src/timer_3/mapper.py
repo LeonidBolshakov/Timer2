@@ -24,7 +24,7 @@ def dto_to_model(dto: DTO) -> Model:
         ms_s=dto.ms_s,
         active_tab_in_QTabWidget=dto.active_tab_in_QTabWidget,
         cycle_intervals=f.cycle_intervals_list(dto.cycle_intervals),
-        cycle_repetitions=dto.cycle_repetitions,
+        cycle_Repetitions=dto.cycle_Repetitions,
         endlessly=dto.cycle_endlessly,
         current_interval=dto.current_interval,
         interval_duration=dto.interval_duration,
@@ -53,7 +53,7 @@ def model_to_dto(model: Model) -> DTO:
         ms_s=model.ms_s,
         active_tab_in_QTabWidget=model.active_tab_in_QTabWidget,
         cycle_intervals=f.cycle_intervals_to_display(model.cycle_intervals),
-        cycle_repetitions=model.cycle_repetitions,
+        cycle_Repetitions=model.cycle_Repetitions,
         cycle_endlessly=model.endlessly,
         current_interval=model.current_interval,
         interval_duration=model.interval_duration,
@@ -165,8 +165,8 @@ def json_dict_to_dto(data: object) -> DTO:
         ),
         active_tab_in_QTabWidget=int_or_default("active_tab_in_QTabWidget"),
         cycle_intervals=str_or_default("cycle_intervals"),
-        cycle_repetitions=int_or_default(
-            "cycle_repetitions",
+        cycle_Repetitions=int_or_default(
+            "cycle_Repetitions",
             min_value=1,
             max_value=99,
         ),

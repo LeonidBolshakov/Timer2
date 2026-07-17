@@ -18,7 +18,7 @@ def default_model() -> Model:
         ms_s=0,
         active_tab_in_QTabWidget=0,
         cycle_intervals=list(),
-        cycle_repetitions=3,
+        cycle_Repetitions=3,
         endlessly=False,
         current_interval=0,
         interval_duration=0,

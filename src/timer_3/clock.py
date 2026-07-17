@@ -3,16 +3,14 @@ from collections.abc import Callable
 
 from .precise_timer import PreciseTimer
 from .const import Const as C
-from .tunes import Context
 from . import functions as f
 
 
 class Clock:
     """Управляет отсчётом времени и событиями таймера."""
 
-    def __init__(self, seconds_left: int, settings: Context) -> None:
-        self.seconds_left = seconds_left
-        self.settings = settings
+    def __init__(self) -> None:
+        self.seconds_left = 0
         self.connections: dict[str, Callable[..., None]] = {}
         self.timer = PreciseTimer(C.TIMER_INTERVAL, self.on_time_out)
 
