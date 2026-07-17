@@ -79,7 +79,7 @@ class Model:
             case ParamKeys.CYCLE_ENDLESSLY:
                 self.endlessly = f._to_bool(value)
 
-            case ParamKeys.cycle_repetitions:
+            case ParamKeys.CYCLE_REPETITIONS:
                 self.cycle_repetitions = f._to_int(value)
 
             case ParamKeys.ACTIVE_TAB_IN_QTABWIDGET:

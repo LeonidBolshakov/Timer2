@@ -48,7 +48,7 @@ def test_dto_to_json_dict_contains_only_json_fields() -> None:
         "cycle_endlessly": False,
         "cycle_intervals": "",
         "cycle_left": 0,
-        "cycle_repetitions": 3,
+        "CYCLE_REPETITIONS": 3,
         "file_melody": "_internal/default.mp3",
         "hm_h": 0,
         "hm_m": 0,

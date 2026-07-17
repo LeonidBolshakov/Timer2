@@ -71,7 +71,7 @@ class Timer3Controller:
                     self.window.lineEdit_HM_H,
                     self.window.lineEdit_HM_M,
                 )
-                self._inaktivate_widgets(
+                self._inactivate_widgets(
                     self.window.lineEdit_MS_M,
                     self.window.lineEdit_MS_S,
                 )
@@ -81,7 +81,7 @@ class Timer3Controller:
                     self.window.lineEdit_MS_M,
                     self.window.lineEdit_MS_S,
                 )
-                self._inaktivate_widgets(
+                self._inactivate_widgets(
                     self.window.lineEdit_HM_H,
                     self.window.lineEdit_HM_M,
                 )
@@ -115,7 +115,7 @@ class Timer3Controller:
             self.window.spinBoxCycleRepetitions.setDisabled(False)
 
     def on_cycle_repetitions_changed(self, value: int) -> None:
-        self.context.set_value(ParamKeys.cycle_repetitions, value)
+        self.context.set_value(ParamKeys.CYCLE_REPETITIONS, value)
 
     def on_qtab_widget_changed(self, index: int) -> None:
         self.init_focus_for_tab(index)
@@ -206,7 +206,7 @@ class Timer3Controller:
         active_2.setStyleSheet(C.ACTIVE_FIELD_BG_COLOR)
 
     @staticmethod
-    def _inaktivate_widgets(
+    def _inactivate_widgets(
         inactive_1: QLineEdit,
         inactive_2: QLineEdit,
     ) -> None:

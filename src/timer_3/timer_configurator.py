@@ -100,7 +100,7 @@ class Timer3UiConfigurator:
         self.window.checkboxEndlessly.setCheckState(
             Qt.CheckState.Checked if model.endlessly else Qt.CheckState.Unchecked
         )
-        self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
+        self.window.spinBoxCycleRepetitions.setValue(model.CYCLE_REPETITIONS)
 
     def reset_ordinary_fields(self) -> None:
         self.context.set_value(ParamKeys.HM_H, 0, save=False)
@@ -111,7 +111,7 @@ class Timer3UiConfigurator:
     def reset_cycle_fields(self) -> None:
         self.context.set_value(ParamKeys.CYCLE_INTERVALS, [], save=False)
         self.context.set_value(ParamKeys.CYCLE_ENDLESSLY, False, save=False)
-        self.context.set_value(ParamKeys.cycle_repetitions, 1)
+        self.context.set_value(ParamKeys.CYCLE_REPETITIONS, 1)
 
     def init_current_tab_and_focus(self) -> None:
         tab_index = self.context.model.active_tab_in_QTabWidget
@@ -129,7 +129,7 @@ class Timer3UiConfigurator:
         self.window.checkboxEndlessly.setCheckState(
             Qt.CheckState.Checked if model.endlessly else Qt.CheckState.Unchecked
         )
-        self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
+        self.window.spinBoxCycleRepetitions.setValue(model.CYCLE_REPETITIONS)
 
     def init_active_button_style(self) -> None:
         self.window.setStyleSheet(

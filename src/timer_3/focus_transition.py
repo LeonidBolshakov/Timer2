@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget
 
-from time_input_mode import TimeInputMode
+from .time_input_mode import TimeInputMode
 
 if TYPE_CHECKING:
     from .main import Timer_3

@@ -166,7 +166,7 @@ def json_dict_to_dto(data: object) -> DTO:
         active_tab_in_QTabWidget=int_or_default("active_tab_in_QTabWidget"),
         cycle_intervals=str_or_default("cycle_intervals"),
         cycle_repetitions=int_or_default(
-            "cycle_repetitions",
+            "CYCLE_REPETITIONS",
             min_value=1,
             max_value=99,
         ),
