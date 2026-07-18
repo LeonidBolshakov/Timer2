@@ -17,11 +17,11 @@ class Clock:
     def on_time_out(self) -> None:
         self.seconds_left -= 1
 
+        self.callback("a_second_passed", self.seconds_left)
+
         if self.is_end_timer():
             self.callback("end_of_timer")
             return
-
-        self.callback("a_second_passed", self.seconds_left)
 
     def is_end_timer(self) -> bool:
         return self.seconds_left <= 0

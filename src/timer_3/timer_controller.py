@@ -126,8 +126,6 @@ class Timer3Controller:
     # ------------------
 
     def for_ordinary_a_second_passed(self, seconds_left: int) -> None:
-        self.check_inform_voice_and_final_beep()
-
         hour, minutes, sec = f.hour_minutes_sec(seconds_left)
 
         match self.active_time_field():
@@ -137,6 +135,8 @@ class Timer3Controller:
                 self._draw_hour_min(hour, minutes, sec)
             case None:
                 pass
+
+        self.check_inform_voice_and_final_beep()
 
     def active_time_field(
         self, widget: QLineEdit | None = None
@@ -234,7 +234,7 @@ class Timer3Controller:
         self.prepare_timer(
             seconds_left,
             self.for_ordinary_a_second_passed,
-            self.inform_time.end_of_timer,
+            self.inform_time.end_of_ordynary_timer,
         )
 
     def check_inform_voice_and_final_beep(self) -> None:
@@ -280,10 +280,9 @@ class Timer3Controller:
             self._clock.restart(self._seconds_interval)
         except StopIteration:
             if not self.context.model.endlessly:
+                self._repetitions_count -= 1
                 if self._repetitions_count <= 0:
                     f.go_quit()
-
-                self._repetitions_count -= 1
 
             self.clock_restart()
             self.init_left_field()
