@@ -1,3 +1,5 @@
+"""Преобразования между JSON-словарём, DTO и рабочей моделью."""
+
 from __future__ import annotations
 
 from dataclasses import asdict
@@ -12,6 +14,7 @@ from .settings_schema import CURRENT_SETTINGS_VERSION
 
 
 def dto_to_model(dto: DTO) -> Model:
+    """Создать рабочую Model из проверенного DTO."""
     return Model(
         file_melody=dto.file_melody,
         voice_interval=dto.voice_interval,
@@ -40,6 +43,7 @@ def default_dto() -> DTO:
 
 
 def model_to_dto(model: Model) -> DTO:
+    """Создать JSON-совместимый DTO из рабочей модели."""
     return DTO(
         version=CURRENT_SETTINGS_VERSION,
         file_melody=model.file_melody,
@@ -62,6 +66,7 @@ def model_to_dto(model: Model) -> DTO:
 
 
 def dto_to_json_dict(dto: DTO) -> dict[str, Any]:
+    """Преобразовать DTO в словарь для сериализации JSON."""
     return asdict(dto)
 
 

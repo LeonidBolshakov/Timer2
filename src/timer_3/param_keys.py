@@ -1,3 +1,5 @@
+"""Стабильные ключи изменяемых параметров Timer 3."""
+
 from enum import StrEnum
 
 

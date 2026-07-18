@@ -1,3 +1,5 @@
+"""Безопасное хранение JSON-профилей и указателя активного файла."""
+
 from __future__ import annotations
 
 import json

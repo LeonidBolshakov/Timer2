@@ -1,3 +1,5 @@
+"""Обработчики редактирования и переключения профилей настроек."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -18,11 +20,13 @@ if TYPE_CHECKING:
 
 
 class TunesController:
+    """Координирует окно настроек с Context и предупреждениями Storage."""
     def __init__(self, window: TunesWindow) -> None:
         self.window = window
         self.settings = window.settings
 
     def refresh_tune_ui(self) -> None:
+        """Перенести активный профиль и значения модели в виджеты."""
         model = self.settings.model
 
         self.window.lnEdFileTunes.setText(str(self.settings.settings_file))
@@ -37,22 +41,26 @@ class TunesController:
             )
 
     def on_voice_interval_edited(self) -> None:
+        """Проверить и сохранить интервал голосовых сообщений."""
         self._set_int_from_line_edit(
             ParamKeys.VOICE_INTERVAL, self.window.lnEdVoiceInterval
         )
 
     def on_beep_interval_edited(self) -> None:
+        """Проверить и сохранить интервал финальных сигналов."""
         self._set_int_from_line_edit(
             ParamKeys.BEEP_INTERVAL, self.window.lnEdBeepInterval
         )
 
     def on_beep_period_in_final_edited(self) -> None:
+        """Проверить и сохранить длительность финального периода."""
         self._set_int_from_line_edit(
             ParamKeys.BEEP_PERIOD_IN_FINAL,
             self.window.lnEdBeepPeriodInFinal,
         )
 
     def on_restore_changed(self, state: int) -> None:
+        """Сохранить флаг восстановления времени и показать ошибки записи."""
         self.settings.set_value(
             ParamKeys.RESTORE_TIME,
             state == Qt.CheckState.Checked.value,
@@ -60,6 +68,7 @@ class TunesController:
         self._show_storage_warnings()
 
     def on_tool_btn_melody(self) -> None:
+        """Выбрать MP3, сохранить путь и обновить окно."""
         file_path = self._select_file(
             current_file=self.settings.model.file_melody,
             title=C.TITLE_SELECT_MELODY,
@@ -72,6 +81,7 @@ class TunesController:
         self.refresh_tune_ui()
 
     def on_tool_btn_file_tunes(self) -> None:
+        """Выбрать JSON-профиль через стандартный файловый диалог."""
         file_path = self._select_file(
             current_file=str(self.settings.settings_file),
             title=C.TITLE_SELECT_FILE_TUNE,
@@ -82,6 +92,7 @@ class TunesController:
         self._switch_settings_file(Path(file_path))
 
     def on_file_tunes_edited(self) -> None:
+        """Нормализовать введённый путь и переключить активный профиль."""
         text = self.window.lnEdFileTunes.text().strip()
         if not text:
             self.refresh_tune_ui()

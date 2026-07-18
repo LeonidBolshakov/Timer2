@@ -1,3 +1,5 @@
+"""Главное окно и точка входа desktop-приложения Timer 3."""
+
 import io
 import sys
 from contextlib import suppress
@@ -62,12 +64,14 @@ class Timer_3(QMainWindow):
         )
 
     def start(self) -> int:
+        """Показать главное окно и запустить цикл событий Qt."""
         self.show()
         # noinspection PyArgumentList
         return QApplication.exec()
 
 
 def main() -> None:
+    """Создать QApplication, главное окно и освободить mixer при выходе."""
     def on_app_exit() -> None:
         with suppress(pygame.error):
             pygame.mixer.quit()

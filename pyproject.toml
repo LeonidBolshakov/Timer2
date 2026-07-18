@@ -1,5 +1,5 @@
 [project]
-name = "timer-2"
+name = "timer-3"
 version = "0.1.0"
 description = "Desktop countdown timer with voice and sound notifications"
 readme = "README.md"

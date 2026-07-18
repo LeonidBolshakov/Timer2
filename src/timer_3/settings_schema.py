@@ -1,3 +1,5 @@
+"""Версия JSON-схемы и допустимые диапазоны настроек."""
+
 CURRENT_SETTINGS_VERSION = 1
 
 VOICE_INTERVAL_MIN = 1

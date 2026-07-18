@@ -241,7 +241,7 @@ def test_common_numeric_setter_warns_and_refreshes_after_error(
 
     controller._set_int_from_line_edit(ParamKeys.VOICE_INTERVAL, Field("999"))
 
-    assert "outside range" in warnings[0][2]
+    assert "outside range" in str(warnings[0][2])
     assert events == ["storage", "refresh"]
 
 
@@ -280,12 +280,15 @@ def test_select_file_uses_parent_of_current_file(
 ) -> None:
     controller = make_controller(tmp_path)
     calls: list[tuple[object, ...]] = []
+
+    def get_open_file_name(*args: object) -> tuple[str, str]:
+        calls.append(args)
+        return "selected.json", ""
+
     monkeypatch.setattr(
         tunes_module,
         "QFileDialog",
-        SimpleNamespace(
-            getOpenFileName=lambda *args: (calls.append(args) or ("selected.json", ""))
-        ),
+        SimpleNamespace(getOpenFileName=get_open_file_name),
     )
 
     result = controller._select_file(

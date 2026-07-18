@@ -1,3 +1,5 @@
+"""Типизированная рабочая модель пользовательских настроек."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ from .time_input_mode import TimeInputMode
 
 @dataclass(slots=True)
 class Model:
+    """Хранит нормализованные настройки, используемые приложением."""
     file_melody: str
     voice_interval: int
     beep_interval: int
@@ -29,6 +32,11 @@ class Model:
     left: int
 
     def set_value(self, key: ParamKeys, value: TuneValue) -> None:
+        """Проверить и присвоить настройку по ключу ParamKeys.
+
+        Неподдерживаемый ключ или несовместимый тип считается нарушением внутреннего
+        контракта.
+        """
         match key:
             case ParamKeys.FILE_MELODY:
                 self.file_melody = str(value)
@@ -92,6 +100,7 @@ class Model:
 
     @property
     def active_time_mode(self) -> TimeInputMode | None:
+        """Определить активный формат обычного таймера по сохранённым полям."""
         if self.hm_h != 0 or self.hm_m != 0:
             return TimeInputMode.HM
 

@@ -1,3 +1,5 @@
+"""Пользовательские сценарии обычного и циклического таймеров."""
+
 from __future__ import annotations
 
 from collections.abc import Iterator, Callable
@@ -28,6 +30,8 @@ if TYPE_CHECKING:
 
 
 class Timer3Controller:
+    """Координирует главное окно, настройки, Clock и информирование."""
+
     def __init__(self, window: Timer_3) -> None:
         self.window = window
         self.active_tab_in_QTabWidget = 0
@@ -42,6 +46,7 @@ class Timer3Controller:
         self._repetitions_count = 0
 
     def on_btn_start_click(self) -> None:
+        """Подготовить выбранный режим, заблокировать кнопку и запустить Clock."""
         active_tab_in_QTabWidget = self.context.model.active_tab_in_QTabWidget
 
         if active_tab_in_QTabWidget == 0:
@@ -55,6 +60,7 @@ class Timer3Controller:
         self._clock.start()
 
     def on_btn_tunes_click(self) -> None:
+        """Создать, при необходимости, и показать окно настроек."""
         if self._tunes_window is None:
             self._tunes_window = TunesWindow(self.context)
 
@@ -65,6 +71,7 @@ class Timer3Controller:
         self._tunes_window.show_ui()
 
     def on_line_edit_edited(self, widget: QLineEdit) -> None:
+        """Активировать выбранную пару времени и сохранить введённые значения."""
         match self.active_time_field(widget):
             case TimeInputMode.HM:
                 self._activate_widgets(
@@ -94,6 +101,7 @@ class Timer3Controller:
         self._commit_time_state_and_advance_focus(widget)
 
     def on_line_edit_cycle_intervals_edited(self) -> None:
+        """Проверить строку интервалов и сохранить допустимый список."""
         text = self.window.lineEditCycleIntervals.text()
         intervals = f.cycle_intervals_list(text)
 
@@ -105,6 +113,7 @@ class Timer3Controller:
         self.context.set_value(ParamKeys.CYCLE_INTERVALS, intervals)
 
     def on_endlessly_changed(self, state: int) -> None:
+        """Сохранить бесконечный режим и обновить доступность числа повторов."""
         self.context.set_value(
             ParamKeys.CYCLE_ENDLESSLY,
             state == Qt.CheckState.Checked.value,
@@ -115,9 +124,11 @@ class Timer3Controller:
             self.window.spinBoxCycleRepetitions.setDisabled(False)
 
     def on_cycle_repetitions_changed(self, value: int) -> None:
+        """Сохранить новое количество повторов всего цикла."""
         self.context.set_value(ParamKeys.CYCLE_REPETITIONS, value)
 
     def on_qtab_widget_changed(self, index: int) -> None:
+        """Сохранить выбранную вкладку и обновить схему фокуса."""
         self.init_focus_for_tab(index)
         self.context.set_value(ParamKeys.ACTIVE_TAB_IN_QTABWIDGET, index)
 
@@ -126,6 +137,7 @@ class Timer3Controller:
     # ------------------
 
     def for_ordinary_a_second_passed(self, seconds_left: int) -> None:
+        """Отобразить тик обычного таймера и выполнить звуковые уведомления."""
         hour, minutes, sec = f.hour_minutes_sec(seconds_left)
 
         match self.active_time_field():
@@ -141,6 +153,7 @@ class Timer3Controller:
     def active_time_field(
         self, widget: QLineEdit | None = None
     ) -> TimeInputMode | None:
+        """Определить формат времени для виджета или текущего состояния окна."""
         if widget is None:
             return self._active_time_field()
 
@@ -238,6 +251,7 @@ class Timer3Controller:
         )
 
     def check_inform_voice_and_final_beep(self) -> None:
+        """Запустить голос или финальный сигнал на соответствующей границе."""
         if self._clock.seconds_left % self.context.model.voice_interval == 0:
             self.inform_time.inform_voice(self._clock.seconds_left)
 
@@ -274,6 +288,7 @@ class Timer3Controller:
         self.init_left_field()
 
     def cycle_end_interval(self) -> None:
+        """Перейти к следующему интервалу, повтору или завершить цикл."""
         self._current_interval_index += 1
         try:
             self._seconds_interval = next(self._cycle_intervals_iter)
@@ -292,6 +307,7 @@ class Timer3Controller:
         self.init_left_field()
 
     def cycle_second_signal(self, seconds_left: int) -> None:
+        """Отобразить остаток времени текущего циклического интервала."""
         self.window.lineEditLeft.setText(str(seconds_left))
 
     def prepare_timer(
@@ -300,6 +316,7 @@ class Timer3Controller:
         a_second_passed: Callable[[int], None],
         end_of_timer: Callable[[], None],
     ) -> None:
+        """Установить длительность и callbacks текущего сценария Clock."""
         self._clock.seconds_left = seconds_interval
         self._clock.connect("a_second_passed", a_second_passed)
         self._clock.connect("end_of_timer", end_of_timer)
@@ -319,6 +336,7 @@ class Timer3Controller:
         self.init_left_field()
 
     def clock_restart(self) -> None:
+        """Начать новый проход последовательности циклических интервалов."""
         self._current_interval_index = 0
         self._cycle_intervals_iter = iter(self.context.model.cycle_intervals)
         try:
@@ -328,6 +346,7 @@ class Timer3Controller:
         self._clock.restart(self._seconds_interval)
 
     def init_focus_for_tab(self, tab_index: int) -> None:
+        """Установить начальную схему фокуса выбранной вкладки."""
         if tab_index == 0:
             self.focus_transition.start_focus_for_ordinary(
                 state=self.context.model.active_time_mode,
@@ -341,4 +360,5 @@ class Timer3Controller:
         raise RuntimeError(C.TITLE_INTERNAL_ERROR)
 
     def init_left_field(self) -> None:
+        """Показать полную длительность текущего интервала как остаток."""
         self.window.lineEditLeft.setText(str(self._seconds_interval))

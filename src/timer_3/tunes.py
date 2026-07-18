@@ -1,3 +1,5 @@
+"""Qt-окно редактирования и переключения профилей настроек."""
+
 from __future__ import annotations
 
 
@@ -43,7 +45,9 @@ class TunesWindow(QWidget):
         self.configurator = TunesConfigurator(self, self.controller)
 
     def refresh_ui(self) -> None:
+        """Перерисовать окно из текущей модели настроек."""
         self.controller.refresh_tune_ui()
 
     def show_ui(self) -> None:
+        """Показать окно настроек без создания нового экземпляра."""
         self.show()

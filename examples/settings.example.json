@@ -6,7 +6,14 @@
     "beep_period_in_final": 11,
     "restore_time": false,
     "hm_h": 0,
-    "hm_m": 1,
+    "hm_m": 0,
     "ms_m": 0,
-    "ms_s": 0
+    "ms_s": 0,
+    "active_tab_in_QTabWidget": 0,
+    "cycle_intervals": "",
+    "cycle_repetitions": 3,
+    "cycle_endlessly": false,
+    "current_interval": 0,
+    "interval_duration": 0,
+    "cycle_left": 0
 }

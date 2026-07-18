@@ -1,3 +1,5 @@
+"""Начальная настройка виджетов и сигналов главного окна."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class Timer3UiConfigurator:
+    """Связывает UI с контроллером и восстанавливает начальное состояние."""
     def __init__(self, window: Timer_3, controller: Timer3Controller) -> None:
         self.window = window
         self.controller = controller
@@ -32,12 +35,14 @@ class Timer3UiConfigurator:
         self.init_vars_and_focus()
 
     def set_validators(self) -> None:
+        """Назначить валидаторы полям часов, минут и секунд."""
         self.window.lineEdit_HM_H.setValidator(self.validator_hour)
         self.window.lineEdit_HM_M.setValidator(self.validator_min_sec)
         self.window.lineEdit_MS_M.setValidator(self.validator_min_sec)
         self.window.lineEdit_MS_S.setValidator(self.validator_min_sec)
 
     def connect_signals(self) -> None:
+        """Подключить сигналы главного окна к обработчикам контроллера."""
         self.window.btnQuit.clicked.connect(f.go_quit)
         self.window.btnStart.clicked.connect(self.controller.on_btn_start_click)
         self.window.btnTunes.clicked.connect(self.controller.on_btn_tunes_click)
@@ -70,6 +75,7 @@ class Timer3UiConfigurator:
         )
 
     def init_vars_and_focus(self) -> None:
+        """Восстановить либо сбросить поля и установить начальный фокус."""
         self.window.lblSec.setText("")
 
         if self.context.model.restore_time:
@@ -82,6 +88,7 @@ class Timer3UiConfigurator:
         self.init_current_tab_and_focus()
 
     def init_ordinary_fields(self) -> None:
+        """Перенести сохранённое время обычного таймера в виджеты."""
         model = self.context.model
 
         if model.hm_h != 0 or model.hm_m != 0:
@@ -93,6 +100,7 @@ class Timer3UiConfigurator:
             self.window.lineEdit_MS_S.setText(str(model.ms_s))
 
     def init_cycle_fields(self) -> None:
+        """Перенести сохранённые параметры цикла в виджеты."""
         model = self.context.model
         self.window.lineEditCycleIntervals.setText(
             f.to_cycle_interval(model.cycle_intervals)
@@ -103,23 +111,27 @@ class Timer3UiConfigurator:
         self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
 
     def reset_ordinary_fields(self) -> None:
+        """Сбросить сохранённое время обычного таймера без промежуточной записи."""
         self.context.set_value(ParamKeys.HM_H, 0, save=False)
         self.context.set_value(ParamKeys.HM_M, 0, save=False)
         self.context.set_value(ParamKeys.MS_M, 0, save=False)
         self.context.set_value(ParamKeys.MS_S, 0, save=False)
 
     def reset_cycle_fields(self) -> None:
+        """Сбросить параметры цикла и сохранить итоговое состояние."""
         self.context.set_value(ParamKeys.CYCLE_INTERVALS, [], save=False)
         self.context.set_value(ParamKeys.CYCLE_ENDLESSLY, False, save=False)
         self.context.set_value(ParamKeys.CYCLE_REPETITIONS, 1)
 
     def init_current_tab_and_focus(self) -> None:
+        """Восстановить активную вкладку без генерации пользовательского сигнала."""
         tab_index = self.context.model.active_tab_in_QTabWidget
         with QSignalBlocker(self.window.tabWidgetSetTime):
             self.window.tabWidgetSetTime.setCurrentIndex(tab_index)
         self.controller.init_focus_for_tab(tab_index)
 
     def init_tabCycle(self) -> None:
+        """Обновить виджеты циклической вкладки из модели."""
         model = self.context.model
 
         self.window.lineEditCycleIntervals.setText(
@@ -132,6 +144,7 @@ class Timer3UiConfigurator:
         self.window.spinBoxCycleRepetitions.setValue(model.cycle_repetitions)
 
     def init_active_button_style(self) -> None:
+        """Добавить визуальный стиль кнопки, получившей клавиатурный фокус."""
         self.window.setStyleSheet(
             self.window.styleSheet()
             + """

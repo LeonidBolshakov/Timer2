@@ -1,3 +1,5 @@
+"""Неизменяемые UI-строки, диапазоны и параметры Timer 3."""
+
 from dataclasses import dataclass
 
 

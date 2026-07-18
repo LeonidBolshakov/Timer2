@@ -1,3 +1,5 @@
+"""Голосовое и звуковое информирование о ходе таймера."""
+
 import io
 import sys
 import threading
@@ -73,6 +75,11 @@ class InformTime:
             self.voice_lock.release()
 
     def end_of_ordynary_timer(self) -> None:
+        """Проиграть финальную мелодию обычного таймера и завершить приложение.
+
+        Ошибка пути или pygame считается фатальной. Имя метода сохранено для
+        совместимости, включая историческую опечатку в ordinary.
+        """
         file_melody = self.settings.model.file_melody
 
         if not file_melody:
@@ -96,6 +103,7 @@ class InformTime:
     # noinspection PyArgumentList,PyUnresolvedReferences
     @staticmethod
     def control_end_of_melody() -> None:
+        """Дождаться сигнала завершения мелодии во вложенном Qt event loop."""
         timer = QTimer()
         timer.timeout.connect(f.check_music_finished)
         timer.start(C.END_CHECK_INTERVAL)

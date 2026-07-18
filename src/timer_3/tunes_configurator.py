@@ -1,3 +1,5 @@
+"""Валидаторы и связи сигналов окна настроек."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class TunesConfigurator:
+    """Настраивает числовые поля и подключает обработчики TunesController."""
     def __init__(self, window: TunesWindow, controller: TunesController) -> None:
         self.window = window
         self.controller = controller

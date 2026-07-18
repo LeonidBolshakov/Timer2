@@ -1,3 +1,5 @@
+"""Общие преобразования, ресурсы и системные операции приложения."""
+
 from __future__ import annotations
 
 import os
@@ -22,11 +24,17 @@ INTERNAL_ERROR_BEEP_3_DELAY_MS = 2500
 
 
 def num(line_edit: QLineEdit) -> int:
+    """Прочитать целое число из QLineEdit, считая пустую строку нулём."""
     return int(line_edit.text()) if line_edit.text() else 0
 
 
 def go_quit() -> NoReturn:
     # noinspection PyArgumentList
+    """Завершить QApplication и процесс с подходящим кодом возврата.
+
+    При отсутствии экземпляра приложения показывает предупреждение и завершает процесс с
+    кодом 1.
+    """
     app = QApplication.instance()
     if app is not None:
         app.quit()
@@ -38,12 +46,14 @@ def go_quit() -> NoReturn:
 
 
 def hour_minutes_sec(seconds: int) -> tuple[int, int, int]:
+    """Разложить количество секунд на часы, минуты и секунды."""
     hour, min_sec = divmod(seconds, C.SECONDS_IN_HOUR)
     minutes, sec = divmod(min_sec, C.SECONDS_IN_MINUTE)
     return hour, minutes, sec
 
 
 def time_to_text(seconds: int) -> str:
+    """Преобразовать остаток времени в русскую фразу для речи."""
     hour, minutes, sec = hour_minutes_sec(seconds)
     hour_text = num_to_text(hour, C.GENDER_M, C.FORMS_HOUR)
     minutes_text = num_to_text(minutes, C.GENDER_F, C.FORMS_MINUTE)
@@ -52,6 +62,7 @@ def time_to_text(seconds: int) -> str:
 
 
 def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
+    """Преобразовать ненулевое число и единицу измерения в текст."""
     if number == 0:
         return ""
     return (
@@ -61,6 +72,7 @@ def num_to_text(number: int, gender: str, word_forms: list[str]) -> str:
 
 
 def get_word_form(number: int, word_after_number: list[str]) -> str:
+    """Выбрать русскую словоформу по последним цифрам числа."""
     last_digit = number % 10
     last_digits = number % 100
 
@@ -74,16 +86,19 @@ def get_word_form(number: int, word_after_number: list[str]) -> str:
 
 
 def inform_fatal_error_and_quit(title: str, text: str) -> NoReturn:
+    """Показать сообщение о фатальной ошибке и завершить приложение."""
     QMessageBox.warning(None, title, text)
     go_quit()
 
 
 def check_music_finished() -> None:
+    """Испустить сигнал завершения, когда pygame перестал играть мелодию."""
     if not pygame.mixer.music.get_busy():
         signals.melody_finished.emit()
 
 
 def get_app_settings_dir() -> Path:
+    """Создать и вернуть каталог настроек Timer 3 в профиле пользователя."""
     settings_dir = Path(os.getenv("APPDATA", Path.home())) / PROGRAM_NAME
     settings_dir.mkdir(parents=True, exist_ok=True)
     return settings_dir
@@ -108,6 +123,11 @@ def resource_path(path: str | Path) -> Path:
 
 
 def cycle_intervals_list(text: str) -> list[int]:
+    """Разобрать строку интервалов и проверить каждый элемент.
+
+    Возвращает пустой список, если строка пуста, содержит нецелое значение или число вне
+    допустимого диапазона.
+    """
     try:
         # Сразу переводим в int при разделении строки
         lst = [int(x) for x in re.split(C.CYCLE_SEPARATOTS, text.strip()) if x]
@@ -188,6 +208,7 @@ def _to_bool(value: TuneValue) -> bool:
 
 
 def to_cycle_interval(value: list[int]) -> str:
+    """Преобразовать интервалы в строку для поля редактирования цикла."""
     return str(value)[1:-1].replace(",", " ")
 
 
@@ -206,11 +227,13 @@ def _to_str(
 
 
 def cycle_intervals_to_display(cycle_intervals: list[int]) -> str:
+    """Преобразовать интервалы в читаемую строку с запятыми."""
     return str(cycle_intervals)[1:-1]
 
 
 def beep() -> None:
     # noinspection PyArgumentList
+    """Воспроизвести стандартный системный сигнал Qt."""
     QApplication.beep()
 
 
@@ -219,6 +242,7 @@ def beep_internal_error() -> None:
     # QApplication.beep() на Windows может отрабатывать с собственной задержкой,
     # поэтому равномерный слышимый ритм не обязательно соответствует равным
     # QTimer-интервалам.
+    """Запланировать три системных сигнала для внутренней ошибки."""
     QTimer.singleShot(0, QApplication.beep)
     QTimer.singleShot(INTERNAL_ERROR_BEEP_2_DELAY_MS, QApplication.beep)
     QTimer.singleShot(INTERNAL_ERROR_BEEP_3_DELAY_MS, QApplication.beep)

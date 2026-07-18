@@ -1,3 +1,5 @@
+"""Схемы клавиатурного фокуса главного окна."""
+
 from __future__ import annotations
 
 from itertools import pairwise
@@ -15,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class FocusSchema(Enum):
+    """Именованные варианты Tab-порядка для режимов таймера."""
     ORDINARY_EMPTY = auto()
     ORDINARY_HM = auto()
     ORDINARY_MS = auto()
@@ -55,11 +58,13 @@ _SCHEMAS: dict[FocusSchema, tuple[str, ...]] = {
 
 @dataclass(frozen=True, slots=True)
 class FocusTarget:
+    """Виджет и требуемая политика фокуса в активной схеме."""
     widget: QWidget
     policy: Qt.FocusPolicy
 
 
 class FocusTransition:
+    """Настраивает Tab-порядок и начальный фокус для текущего режима."""
     def __init__(self, window: Timer_3) -> None:
         self.window = window
 
@@ -107,6 +112,7 @@ class FocusTransition:
         }
 
     def set_focus_sequence(self, schema: FocusSchema) -> None:
+        """Активировать одну из предопределённых схем клавиатурного фокуса."""
         self._schema_processing(
             schema=_SCHEMAS[schema],
         )
@@ -134,6 +140,7 @@ class FocusTransition:
             QWidget.setTabOrder(current, following)
 
     def start_focus_for_ordinary(self, state: TimeInputMode | None) -> None:
+        """Выбрать схему и начальный виджет обычного таймера."""
         match state:
             case None:
                 self.set_focus_sequence(FocusSchema.ORDINARY_EMPTY)
@@ -157,6 +164,7 @@ class FocusTransition:
         )
 
     def start_focus_for_cycle(self) -> None:
+        """Выбрать схему и начальный виджет циклического таймера."""
         self.set_focus_sequence(FocusSchema.CYCLE)
         if self.window.lineEditCycleIntervals.text().strip() == "":
             self.window.lineEditCycleIntervals.setFocus()
@@ -170,6 +178,7 @@ class FocusTransition:
 
 
 def print_tab_order(start_widget: QWidget) -> None:
+    """Напечатать цепочку фокуса для ручной диагностики Qt-интерфейса."""
     current = start_widget
     visited: set[int] = set()
     number = 1

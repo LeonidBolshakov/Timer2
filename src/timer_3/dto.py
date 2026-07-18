@@ -1,3 +1,5 @@
+"""JSON-совместимое представление настроек Timer 3."""
+
 from dataclasses import dataclass
 
 
